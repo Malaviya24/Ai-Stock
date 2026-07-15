@@ -25,6 +25,44 @@ async function withRetry<T>(fn: () => Promise<T>, attempts: number = 3, baseDela
   throw lastError;
 }
 
+/**
+ * Global concurrency limiter for Yahoo Finance requests.
+ * Yahoo rate-limits (HTTP 429) when many requests arrive at once from a
+ * single (especially cloud/datacenter) IP. Limiting concurrency + spacing
+ * requests keeps us under the limit so scans work on hosts like Render.
+ */
+const YAHOO_MAX_CONCURRENT = 2;
+const YAHOO_MIN_GAP_MS = 250;
+let yahooActive = 0;
+const yahooWaiters: Array<() => void> = [];
+
+function acquireYahooSlot(): Promise<void> {
+  if (yahooActive < YAHOO_MAX_CONCURRENT) {
+    yahooActive++;
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => yahooWaiters.push(resolve));
+}
+
+function releaseYahooSlot() {
+  const next = yahooWaiters.shift();
+  if (next) {
+    next();
+  } else {
+    yahooActive--;
+  }
+}
+
+async function throttleYahoo<T>(fn: () => Promise<T>): Promise<T> {
+  await acquireYahooSlot();
+  try {
+    return await fn();
+  } finally {
+    await sleep(YAHOO_MIN_GAP_MS);
+    releaseYahooSlot();
+  }
+}
+
 export async function getStockQuote(symbol: string): Promise<StockQuote | null> {
   // Try Shoonya first if configured
   if (hasShoonyaEnv()) {
@@ -41,15 +79,61 @@ export async function getStockQuote(symbol: string): Promise<StockQuote | null> 
     }
   }
 
+  const now = Date.now();
+  const cached = QUOTE_CACHE.get(symbol);
+  if (cached && now - cached.ts < QUOTE_TTL_MS) {
+    return cached.data;
+  }
+
+  // Primary: derive the quote from the chart() endpoint (v8), which does NOT
+  // require a "crumb" token and is far less likely to be rate-limited (429)
+  // than the quote() endpoint when running from a cloud host.
   try {
-    const now = Date.now();
-    const cached = QUOTE_CACHE.get(symbol);
-    if (cached && now - cached.ts < QUOTE_TTL_MS) {
-      // log(`[DATA] Fetched ${symbol} from CACHE (Yahoo)`, "yahoo"); // Optional: log cache hits?
-      return cached.data;
+    log(`[DATA] Fetching ${symbol} from YAHOO (chart)`, "yahoo");
+    const period1 = new Date();
+    period1.setDate(period1.getDate() - 10);
+    const result: any = await throttleYahoo(() =>
+      withRetry(() => yahooFinance.chart(symbol, { period1, interval: "1d" }), 4, 700)
+    );
+
+    const meta = result?.meta;
+    const candles: any[] = result?.quotes || [];
+    const last = candles.length ? candles[candles.length - 1] : null;
+    const price = meta?.regularMarketPrice ?? last?.close;
+
+    if (price != null) {
+      const prevClose =
+        meta?.chartPreviousClose ??
+        meta?.previousClose ??
+        (candles.length > 1 ? candles[candles.length - 2].close : price);
+      const change = price - prevClose;
+      const data: StockQuote = {
+        symbol: meta?.symbol || symbol,
+        name: meta?.shortName || meta?.longName || symbol,
+        price,
+        change,
+        changePercent: prevClose ? (change / prevClose) * 100 : 0,
+        high: meta?.regularMarketDayHigh ?? last?.high ?? 0,
+        low: meta?.regularMarketDayLow ?? last?.low ?? 0,
+        open: last?.open ?? 0,
+        previousClose: prevClose,
+        volume: meta?.regularMarketVolume ?? last?.volume ?? 0,
+        marketCap: undefined,
+        fiftyTwoWeekHigh: meta?.fiftyTwoWeekHigh || undefined,
+        fiftyTwoWeekLow: meta?.fiftyTwoWeekLow || undefined,
+      };
+      QUOTE_CACHE.set(symbol, { data, ts: now });
+      return data;
     }
-    log(`[DATA] Fetching ${symbol} from YAHOO`, "yahoo");
-    const result: any = await withRetry(() => yahooFinance.quote(symbol), 3, 500);
+  } catch (error: any) {
+    log(`Chart-quote failed for ${symbol}: ${error.message}. Trying quote().`, "yahoo");
+  }
+
+  // Fallback: the classic quote() endpoint (needs a crumb; may hit 429).
+  try {
+    const result: any = await throttleYahoo(() =>
+      withRetry(() => yahooFinance.quote(symbol), 3, 800)
+    );
     if (!result) return null;
 
     const data: StockQuote = {
@@ -121,41 +205,15 @@ export async function getBulkQuotes(symbols: string[]): Promise<Record<string, S
     return out;
   }
 
+  // Fetch each symbol via the crumb-free getStockQuote path. The global
+  // Yahoo throttle limits real concurrency, and QUOTE_CACHE avoids refetches,
+  // so firing these in parallel is safe and avoids the bulk quote() crumb 429.
   try {
-    const now = Date.now();
-    const toFetch: string[] = [];
-    // Use cache where valid
-    for (const sym of symbols) {
-      const cached = QUOTE_CACHE.get(sym);
-      if (cached && now - cached.ts < QUOTE_TTL_MS) {
-        out[sym] = cached.data;
-      } else {
-        toFetch.push(sym);
-      }
-    }
-    if (toFetch.length) {
-      const result = await withRetry(() => (yahooFinance as any).quote(toFetch), 3, 500);
-      const arr: any[] = Array.isArray(result) ? result : [result];
-      for (const r of arr) {
-        if (!r || !r.symbol) continue;
-        const data: StockQuote = {
-          symbol: r.symbol,
-          name: r.shortName || r.longName || r.symbol,
-          price: r.regularMarketPrice || 0,
-          change: r.regularMarketChange || 0,
-          changePercent: r.regularMarketChangePercent || 0,
-          high: r.regularMarketDayHigh || 0,
-          low: r.regularMarketDayLow || 0,
-          open: r.regularMarketOpen || 0,
-          previousClose: r.regularMarketPreviousClose || 0,
-          volume: r.regularMarketVolume || 0,
-          marketCap: r.marketCap || undefined,
-          fiftyTwoWeekHigh: r.fiftyTwoWeekHigh || undefined,
-          fiftyTwoWeekLow: r.fiftyTwoWeekLow || undefined,
-        };
-        QUOTE_CACHE.set(r.symbol, { data, ts: now });
-        out[r.symbol] = data;
-      }
+    const results = await Promise.all(
+      symbols.map(async (sym) => ({ sym, data: await getStockQuote(sym) }))
+    );
+    for (const { sym, data } of results) {
+      if (data) out[sym] = data;
     }
   } catch (error: any) {
     log(`Error bulk quotes for ${symbols.length} symbols: ${error.message}`, "yahoo");
@@ -196,15 +254,17 @@ export async function getHistoricalData(
     period1.setMonth(period1.getMonth() - months);
     const period2 = new Date();
 
-    const result: any = await withRetry(
-      () =>
-        yahooFinance.chart(symbol, {
-          period1,
-          period2,
-          interval: interval,
-        }),
-      3,
-      600
+    const result: any = await throttleYahoo(() =>
+      withRetry(
+        () =>
+          yahooFinance.chart(symbol, {
+            period1,
+            period2,
+            interval: interval,
+          }),
+        3,
+        600
+      )
     );
 
     const quotes = result.quotes || (Array.isArray(result) ? result : []);
@@ -223,15 +283,17 @@ export async function getHistoricalData(
         const weeklyPeriod1 = new Date();
         weeklyPeriod1.setFullYear(weeklyPeriod1.getFullYear() - weeklyYears);
         const weeklyPeriod2 = new Date();
-        const weeklyRes: any = await withRetry(
-          () =>
-            yahooFinance.chart(symbol, {
-              period1: weeklyPeriod1,
-              period2: weeklyPeriod2,
-              interval: "1wk",
-            }),
-          3,
-          600
+        const weeklyRes: any = await throttleYahoo(() =>
+          withRetry(
+            () =>
+              yahooFinance.chart(symbol, {
+                period1: weeklyPeriod1,
+                period2: weeklyPeriod2,
+                interval: "1wk",
+              }),
+            3,
+            600
+          )
         );
         const weeklyQuotes = weeklyRes?.quotes || [];
         const weeklyMapped = weeklyQuotes.map((item: any) => ({
