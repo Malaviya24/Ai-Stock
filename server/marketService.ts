@@ -7,6 +7,23 @@ import { getShoonyaClient, getShoonyaQuote, getShoonyaHistoricalData, hasShoonya
 const YF = (YahooFinanceModule as any).default || YahooFinanceModule;
 const yahooFinance = typeof YF === 'function' ? new YF() : YF;
 
+// Yahoo's responses often fail yahoo-finance2's strict schema validation for
+// thinly-traded / delisted BSE symbols (e.g. currency:null, no regularMarketPrice).
+// We disable throwing/logging on validation since our code already handles
+// missing fields with fallbacks. This also stops the huge log spam on cloud hosts.
+try {
+  yahooFinance.setGlobalConfig?.({
+    validation: { logErrors: false, logOptionsErrors: false },
+  });
+  // Silence the "new version available" and survey notices in logs.
+  yahooFinance.suppressNotices?.(["yahooSurvey", "ripHistorical"]);
+} catch {
+  /* older/newer SDK shape — safe to ignore */
+}
+
+// Module options applied to every Yahoo call: never throw on schema mismatch.
+const NO_VALIDATE = { validateResult: false } as const;
+
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 async function withRetry<T>(fn: () => Promise<T>, attempts: number = 3, baseDelayMs: number = 400): Promise<T> {
@@ -93,7 +110,7 @@ export async function getStockQuote(symbol: string): Promise<StockQuote | null> 
     const period1 = new Date();
     period1.setDate(period1.getDate() - 10);
     const result: any = await throttleYahoo(() =>
-      withRetry(() => yahooFinance.chart(symbol, { period1, interval: "1d" }), 4, 700)
+      withRetry(() => yahooFinance.chart(symbol, { period1, interval: "1d" }, NO_VALIDATE), 4, 700)
     );
 
     const meta = result?.meta;
@@ -132,7 +149,7 @@ export async function getStockQuote(symbol: string): Promise<StockQuote | null> 
   // Fallback: the classic quote() endpoint (needs a crumb; may hit 429).
   try {
     const result: any = await throttleYahoo(() =>
-      withRetry(() => yahooFinance.quote(symbol), 3, 800)
+      withRetry(() => yahooFinance.quote(symbol, {}, NO_VALIDATE), 3, 800)
     );
     if (!result) return null;
 
@@ -163,13 +180,19 @@ export async function getQuoteSummary(symbol: string): Promise<any | null> {
   // Shoonya doesn't provide full fundamental summary like Yahoo
   // Fallback to Yahoo for fundamentals even if Shoonya is active
   try {
-    const result = await withRetry(
-      () =>
-        yahooFinance.quoteSummary(symbol, {
-          modules: ["defaultKeyStatistics", "financialData", "summaryDetail", "price"],
-        }),
-      3,
-      500
+    const result = await throttleYahoo(() =>
+      withRetry(
+        () =>
+          yahooFinance.quoteSummary(
+            symbol,
+            {
+              modules: ["defaultKeyStatistics", "financialData", "summaryDetail", "price"],
+            },
+            NO_VALIDATE
+          ),
+        3,
+        500
+      )
     );
     return result;
   } catch (error: any) {
@@ -257,11 +280,15 @@ export async function getHistoricalData(
     const result: any = await throttleYahoo(() =>
       withRetry(
         () =>
-          yahooFinance.chart(symbol, {
-            period1,
-            period2,
-            interval: interval,
-          }),
+          yahooFinance.chart(
+            symbol,
+            {
+              period1,
+              period2,
+              interval: interval,
+            },
+            NO_VALIDATE
+          ),
         3,
         600
       )
@@ -286,11 +313,15 @@ export async function getHistoricalData(
         const weeklyRes: any = await throttleYahoo(() =>
           withRetry(
             () =>
-              yahooFinance.chart(symbol, {
-                period1: weeklyPeriod1,
-                period2: weeklyPeriod2,
-                interval: "1wk",
-              }),
+              yahooFinance.chart(
+                symbol,
+                {
+                  period1: weeklyPeriod1,
+                  period2: weeklyPeriod2,
+                  interval: "1wk",
+                },
+                NO_VALIDATE
+              ),
             3,
             600
           )
