@@ -28,6 +28,12 @@ export default function StrategyMonthlyCandle() {
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
+  // Clickable stat cards act as a filter for the results below.
+  const [filter, setFilter] = useState<"all" | "bullish" | "bearish" | "notrade">("all");
+
+  // Clicking a category toggles it; clicking the active one (or "Stocks Scanned") resets to all.
+  const toggleFilter = (cat: "all" | "bullish" | "bearish" | "notrade") =>
+    setFilter((prev) => (cat === "all" ? "all" : prev === cat ? "all" : cat));
 
   const { data: signals, isLoading } = useQuery<any[]>({
     queryKey: ["/api/signals", "monthly-candle"],
@@ -160,27 +166,76 @@ export default function StrategyMonthlyCandle() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-          <div className="bg-card border border-border rounded-xl p-3 sm:p-4 text-center">
-            <div className="text-[10px] sm:text-xs text-muted-foreground mb-1">Stocks Scanned</div>
-            <div className="text-base sm:text-xl font-bold" data-testid="text-scanned-count">{totalScanned || "—"}</div>
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="news-label">Filter Results &mdash; click a card</span>
+            {filter !== "all" && (
+              <button
+                onClick={() => setFilter("all")}
+                className="news-label hover:text-foreground underline underline-offset-2"
+                data-testid="button-clear-filter"
+              >
+                Clear filter &times;
+              </button>
+            )}
           </div>
-          <div className="bg-card border border-green-500/20 rounded-xl p-3 sm:p-4 text-center">
-            <div className="text-[10px] sm:text-xs text-green-500 mb-1">Bullish Entry</div>
-            <div className="text-base sm:text-xl font-bold text-green-500" data-testid="text-bullish-count">{bullishCount}</div>
-          </div>
-          <div className="bg-card border border-red-500/20 rounded-xl p-3 sm:p-4 text-center">
-            <div className="text-[10px] sm:text-xs text-red-500 mb-1">Bearish Exit</div>
-            <div className="text-base sm:text-xl font-bold text-red-500" data-testid="text-bearish-count">{bearishCount}</div>
-          </div>
-          <div className="bg-card border border-yellow-500/20 rounded-xl p-3 sm:p-4 text-center">
-            <div className="text-[10px] sm:text-xs text-yellow-500 mb-1">No Trade</div>
-            <div className="text-base sm:text-xl font-bold text-yellow-500" data-testid="text-notrade-count">{noTradeCount}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+            <button
+              type="button"
+              onClick={() => toggleFilter("all")}
+              aria-pressed={filter === "all"}
+              data-testid="card-scanned"
+              className={`border p-3 sm:p-4 text-center transition-colors min-h-[44px] ${
+                filter === "all" ? "bg-foreground text-background border-foreground" : "bg-card border-border hover:bg-neutral-100"
+              }`}
+            >
+              <div className="text-[10px] sm:text-xs uppercase tracking-wider mb-1 opacity-80">Stocks Scanned</div>
+              <div className="text-base sm:text-xl font-bold font-mono" data-testid="text-scanned-count">{totalScanned || "—"}</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleFilter("bullish")}
+              aria-pressed={filter === "bullish"}
+              data-testid="card-bullish"
+              className={`border p-3 sm:p-4 text-center transition-colors min-h-[44px] ${
+                filter === "bullish" ? "bg-green-600 text-white border-green-600" : "bg-card border-green-500/40 hover:bg-green-500/5"
+              }`}
+            >
+              <div className={`text-[10px] sm:text-xs uppercase tracking-wider mb-1 ${filter === "bullish" ? "text-white/90" : "text-green-600"}`}>Bullish Entry</div>
+              <div className={`text-base sm:text-xl font-bold font-mono ${filter === "bullish" ? "text-white" : "text-green-600"}`} data-testid="text-bullish-count">{bullishCount}</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleFilter("bearish")}
+              aria-pressed={filter === "bearish"}
+              data-testid="card-bearish"
+              className={`border p-3 sm:p-4 text-center transition-colors min-h-[44px] ${
+                filter === "bearish" ? "bg-[hsl(var(--accent))] text-white border-[hsl(var(--accent))]" : "bg-card border-red-500/40 hover:bg-red-500/5"
+              }`}
+            >
+              <div className={`text-[10px] sm:text-xs uppercase tracking-wider mb-1 ${filter === "bearish" ? "text-white/90" : "text-red-600"}`}>Bearish Exit</div>
+              <div className={`text-base sm:text-xl font-bold font-mono ${filter === "bearish" ? "text-white" : "text-red-600"}`} data-testid="text-bearish-count">{bearishCount}</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleFilter("notrade")}
+              aria-pressed={filter === "notrade"}
+              data-testid="card-notrade"
+              className={`border p-3 sm:p-4 text-center transition-colors min-h-[44px] ${
+                filter === "notrade" ? "bg-foreground text-background border-foreground" : "bg-card border-border hover:bg-neutral-100"
+              }`}
+            >
+              <div className="text-[10px] sm:text-xs uppercase tracking-wider mb-1 opacity-80">No Trade</div>
+              <div className="text-base sm:text-xl font-bold font-mono" data-testid="text-notrade-count">{noTradeCount}</div>
+            </button>
           </div>
         </div>
 
 
-        {bullishCount > 0 && (
+        {(filter === "all" || filter === "bullish") && bullishCount > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2 sm:mb-3">
               <CandlestickChart className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
@@ -290,7 +345,7 @@ export default function StrategyMonthlyCandle() {
           </div>
         )}
 
-        {bearishCount > 0 && (
+        {(filter === "all" || filter === "bearish") && bearishCount > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2 sm:mb-3">
               <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
@@ -377,6 +432,44 @@ export default function StrategyMonthlyCandle() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {filter === "notrade" && noTradeCount > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              <CandlestickChart className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+              <h2 className="text-base sm:text-lg font-semibold">No-Trade Stocks ({noTradeCount})</h2>
+            </div>
+            <div className="bg-card border border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm rows-cv" data-testid="table-notrade-signals">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>
+                      <th className="text-left px-4 py-3 text-muted-foreground font-medium">Month</th>
+                      <th className="text-left px-4 py-3 text-muted-foreground font-medium">Candle</th>
+                      <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (₹)</th>
+                      <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {noTradeData.map((item: any, i: number) => (
+                      <tr key={item.id || i} className="border-b border-border last:border-0">
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
+                          <div className="text-xs text-muted-foreground">{item.name || item.companyName}</div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{item.currentMonth || item.monthRange || "—"}</td>
+                        <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
+                        <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{item.status || item.details || "No signal"}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
