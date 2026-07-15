@@ -29,22 +29,30 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 const strategies: { name: string; icon: LucideIcon; desc: string }[] = [
-  { name: "REIT & INVIT", icon: Building2, desc: "Quarterly dividend income tracking" },
-  { name: "BOH", icon: Search, desc: "52-week high/low zone detection" },
+  // Featured (first 6 render as large editorial cards)
+  { name: "Nifty DMA Strategy", icon: LineChart, desc: "Automated bull-run buying with 50/100/200 DMA alignment and SIP averaging." },
+  { name: "Fundamental + BOH", icon: BarChart2, desc: "Rank stocks by PE, PB, PS and EV/EBITDA, filtered through the BOH zone." },
+  { name: "RSI Nifty Shop", icon: ShoppingCart, desc: "Mechanical mean-reversion with a 6-level, 7-lot averaging ladder." },
+  { name: "Gap Up Strategy", icon: Rocket, desc: "Capture 3.14% gap-ups on NIFTY 100 with a 3 PM confirmation rule." },
+  { name: "Turtle Trading", icon: Turtle, desc: "Classic 55-day breakout system with 15-part capital allocation." },
+  { name: "REIT & INVIT", icon: Building2, desc: "Breakout-driven dividend income tracking across REITs and INVITs." },
+  // Index (remaining 12 render as a compact contents list)
+  { name: "BOH Filter", icon: Search, desc: "52-week high/low zone detection" },
   { name: "Supu Compounding", icon: Coins, desc: "Compounding via systematic cycles" },
-  { name: "SRTV ETF Scanner", icon: TreePine, desc: "Momentum tracking for NSE ETFs" },
+  { name: "SRTV ETF Scanner", icon: TreePine, desc: "124-DMA mean reversion for NSE ETFs" },
   { name: "Monthly Candle", icon: CandlestickChart, desc: "Homma method on monthly timeframe" },
-  { name: "Fundamental + BOH", icon: BarChart2, desc: "Rank stocks by PE, PB, PS, EV/EBITDA" },
-  { name: "Homa Genius Method", icon: Zap, desc: "Multi-ETF rotational relative strength strategy" },
-  { name: "RSI Nifty Shop", icon: ShoppingCart, desc: "Mechanical mean-reversion with 7-lot averaging" },
-
-  { name: "Gap Up Strategy", icon: Rocket, desc: "Capture gap ups from NIFTY 100" },
-  { name: "Weekly ETF Contrarian", icon: Turtle, desc: "Contrarian plays on major index ETFs" },
-  { name: "Darvas Box Theory", icon: Package, desc: "Identify breakout boxes with price action" },
+  { name: "Homa Genius Method", icon: Zap, desc: "Multi-ETF rotational relative strength" },
+  { name: "Weekly ETF Contrarian", icon: Activity, desc: "Contrarian plays on major index ETFs" },
+  { name: "LTVI Value Index", icon: Target, desc: "PB + PE + P/NSPS + P/RONW ranking" },
+  { name: "Marking System", icon: Shield, desc: "Rank-based relative valuation scoring" },
+  { name: "Money Tree ETF", icon: TreePine, desc: "Weekly SIP with profit-booking engine" },
+  { name: "DMA Compounding", icon: Coins, desc: "6.28% target growth with tax modelling" },
+  { name: "Smart CAR", icon: Activity, desc: "Cumulative average reversal analysis" },
+  { name: "DMA + CAR Merged", icon: Package, desc: "Two-phase DMA then CAR confirmation" },
 ];
 
 const stats = [
-  { label: "Strategies", value: "12", icon: Target },
+  { label: "Strategies", value: "18", icon: Target },
   { label: "NIFTY 100 Stocks", value: "100+", icon: BarChart2 },
   { label: "Backtest Years", value: "10+", icon: Activity },
   { label: "Risk Metrics", value: "8", icon: Shield },
@@ -133,7 +141,7 @@ export default function Landing() {
               <span className="font-mono text-[0.65rem] uppercase tracking-widest">Breaking &middot; AI-Powered Analysis</span>
             </div>
             <h1 className="font-serif font-black leading-[0.9] tracking-tighter text-5xl sm:text-6xl lg:text-8xl mb-6" data-testid="text-hero-heading">
-              Master the Market with <span className="italic">20 Proven Strategies</span>
+              Master the Market with <span className="italic">18 Proven Strategies</span>
             </h1>
             <p className="font-body text-base sm:text-xl text-neutral-700 max-w-2xl mx-auto mb-8 leading-relaxed">
               Real-time scanning, AI scoring, and capital allocation for NIFTY 100 stocks &mdash; from RSI ladders to Darvas Box breakouts, every edge in one edition.
@@ -178,12 +186,12 @@ export default function Landing() {
             </p>
           </div>
 
-          {/* Editorial contents grid — collapsed ink borders, no gaps */}
+          {/* Featured stories — 6 lead strategies as large editorial cells */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-foreground">
-            {strategies.map((strategy, i) => (
+            {strategies.slice(0, 6).map((strategy, i) => (
               <div
                 key={strategy.name}
-                className="group relative border-r border-b border-foreground p-5 sm:p-6 cursor-pointer transition-colors duration-200 hover:bg-foreground hover:text-background"
+                className="group relative border-r border-b border-foreground p-6 cursor-pointer transition-colors duration-200 hover:bg-foreground hover:text-background"
                 data-testid={`strategy-card-${i}`}
               >
                 <div className="flex items-start justify-between mb-4">
@@ -200,8 +208,29 @@ export default function Landing() {
                 </p>
               </div>
             ))}
-            {/* Filler cell keeps the collapsed grid rectangular on the last row */}
-            <div className="hidden lg:block border-r border-b border-foreground bg-[repeating-linear-gradient(135deg,transparent,transparent_6px,rgba(0,0,0,0.05)_6px,rgba(0,0,0,0.05)_7px)]" aria-hidden="true" />
+          </div>
+
+          {/* Also on the desk — compact contents index for the remaining strategies */}
+          <div className="flex items-center gap-3 mt-10 mb-4">
+            <span className="news-label">Also on the Desk</span>
+            <span className="flex-1 h-px bg-foreground/30" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-foreground">
+            {strategies.slice(6).map((strategy, i) => (
+              <div
+                key={strategy.name}
+                className="group flex items-baseline gap-3 border-r border-b border-foreground px-4 py-3 cursor-pointer transition-colors hover:bg-secondary"
+                data-testid={`strategy-index-${i}`}
+              >
+                <span className="font-mono text-xs tabular-nums text-muted-foreground shrink-0 group-hover:text-[hsl(var(--accent))]">
+                  {String(i + 7).padStart(2, "0")}
+                </span>
+                <div className="min-w-0">
+                  <div className="font-serif text-base font-bold leading-tight truncate">{strategy.name}</div>
+                  <div className="font-body text-xs text-neutral-600 leading-snug truncate">{strategy.desc}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
