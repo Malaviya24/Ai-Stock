@@ -1,0 +1,63 @@
+# Render Blueprint for AI Stock - Capital Allocator
+# Docs: https://render.com/docs/blueprint-spec
+#
+# To deploy:
+#   1. Push this file to GitHub (already in your repo)
+#   2. Go to https://dashboard.render.com/select-repo?type=blueprint
+#   3. Pick the Malaviya24/Ai-Stock repo -> Render reads this file automatically
+#   4. Click "Apply" and wait for the build to finish
+
+services:
+  - type: web
+    name: ai-stock
+    runtime: node
+    plan: free
+    region: singapore            # closest region to India for lower latency
+    branch: main
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.cjs
+    healthCheckPath: /
+    autoDeploy: true             # redeploys automatically on every git push
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # ---------------------------------------------------------------
+      # Data source: Yahoo Finance works with NO keys (default).
+      # Fill these ONLY after your Shoonya account is approved.
+      # In Render, set them in Dashboard -> Environment (keep them secret,
+      # do NOT hardcode values here).
+      # ---------------------------------------------------------------
+      - key: SHOONYA_USER_ID
+        sync: false
+      - key: SHOONYA_PASSWORD
+        sync: false
+      - key: SHOONYA_TOTP_SECRET
+        sync: false
+      - key: SHOONYA_API_KEY
+        sync: false
+      - key: SHOONYA_VENDOR_CODE
+        sync: false
+      - key: SHOONYA_IMEI
+        sync: false
+      # ---------------------------------------------------------------
+      # Optional database. Leave unset to use in-memory storage.
+      # To persist data, uncomment the database below and this line will
+      # be linked automatically.
+      # ---------------------------------------------------------------
+      - key: DATABASE_URL
+        sync: false
+
+# ---------------------------------------------------------------------
+# OPTIONAL: free PostgreSQL for persistent watchlist/portfolio/signals.
+# Uncomment this block AND the fromDatabase link below to enable it.
+# ---------------------------------------------------------------------
+# databases:
+#   - name: ai-stock-db
+#     plan: free
+#     region: singapore
+#
+# Then replace the DATABASE_URL entry above with:
+#       - key: DATABASE_URL
+#         fromDatabase:
+#           name: ai-stock-db
+#           property: connectionString
