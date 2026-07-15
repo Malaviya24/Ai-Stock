@@ -163,25 +163,45 @@ export default function Landing() {
 
       <div className="news-ornament py-6 text-xl">&#x2727; &#x2727; &#x2727;</div>
 
-      <section className="py-12 sm:py-20 px-4 border-t border-border">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3" data-testid="text-strategies-heading">12 Battle-Tested Strategies</h2>
-            <p className="text-sm sm:text-base text-muted-foreground">Each strategy is implemented with real-time Yahoo Finance data</p>
+      <section className="py-14 sm:py-20 px-4 border-t-4 border-foreground newsprint-texture">
+        <div className="max-w-screen-xl mx-auto">
+          {/* Section masthead */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-foreground pb-4 mb-8 sm:mb-10 gap-3">
+            <div>
+              <div className="news-label mb-2">Section B &middot; The Strategy Desk</div>
+              <h2 className="font-serif text-4xl lg:text-5xl font-black leading-none tracking-tight" data-testid="text-strategies-heading">
+                Battle-Tested Strategies
+              </h2>
+            </div>
+            <p className="font-body text-sm text-neutral-600 sm:text-right max-w-xs">
+              {strategies.length} systematic methods, each powered by live NIFTY market data.
+            </p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3">
-            {strategies.map((strategy) => (
+
+          {/* Editorial contents grid — collapsed ink borders, no gaps */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-foreground">
+            {strategies.map((strategy, i) => (
               <div
                 key={strategy.name}
-                className="bg-card border border-border rounded-xl p-3 sm:p-4 hover:border-primary/50 transition-colors cursor-pointer"
+                className="group relative border-r border-b border-foreground p-5 sm:p-6 cursor-pointer transition-colors duration-200 hover:bg-foreground hover:text-background"
+                data-testid={`strategy-card-${i}`}
               >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/15 flex items-center justify-center mb-2">
-                  <strategy.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                <div className="flex items-start justify-between mb-4">
+                  <span className="font-mono text-4xl font-bold leading-none text-foreground/15 transition-colors group-hover:text-[hsl(var(--accent))]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="h-10 w-10 border border-foreground flex items-center justify-center shrink-0 transition-colors group-hover:border-background">
+                    <strategy.icon className="w-4 h-4" strokeWidth={1.5} />
+                  </span>
                 </div>
-                <div className="font-medium text-xs sm:text-sm mb-0.5 sm:mb-1 leading-tight">{strategy.name}</div>
-                <div className="text-[10px] sm:text-xs text-muted-foreground leading-snug">{strategy.desc}</div>
+                <h3 className="font-serif text-xl font-bold leading-tight mb-1.5">{strategy.name}</h3>
+                <p className="font-body text-sm leading-relaxed text-neutral-600 transition-colors group-hover:text-background/75">
+                  {strategy.desc}
+                </p>
               </div>
             ))}
+            {/* Filler cell keeps the collapsed grid rectangular on the last row */}
+            <div className="hidden lg:block border-r border-b border-foreground bg-[repeating-linear-gradient(135deg,transparent,transparent_6px,rgba(0,0,0,0.05)_6px,rgba(0,0,0,0.05)_7px)]" aria-hidden="true" />
           </div>
         </div>
       </section>
