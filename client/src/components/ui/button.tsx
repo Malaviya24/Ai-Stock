@@ -4,31 +4,32 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+// Newsprint buttons: uppercase sans labels, sharp corners, and snappy
+// black/white color inversion on hover instead of soft elevation.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0" +
-  " hover-elevate active-elevate-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap border font-sans text-xs font-semibold uppercase tracking-widest transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground border border-primary-border",
+          "bg-primary text-primary-foreground border-foreground hover:bg-background hover:text-foreground",
         destructive:
-          "bg-destructive text-destructive-foreground border border-destructive-border",
+          "bg-destructive text-destructive-foreground border-destructive hover:bg-background hover:text-destructive",
         outline:
-          // Shows the background color of whatever card / sidebar / accent background it is inside of.
-          // Inherits the current text color.
-          " border [border-color:var(--button-outline)]  shadow-xs active:shadow-none ",
-        secondary: "border bg-secondary text-secondary-foreground border border-secondary-border ",
-        // Add a transparent border so that when someone toggles a border on later, it doesn't shift layout/size.
-        ghost: "border border-transparent",
+          "border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background",
+        secondary:
+          "bg-secondary text-secondary-foreground border-foreground hover:bg-foreground hover:text-background",
+        // Transparent border keeps sizing stable if a border is toggled on later.
+        ghost:
+          "border-transparent hover:bg-secondary hover:text-foreground",
+        link:
+          "border-transparent text-foreground underline-offset-4 decoration-2 decoration-[hsl(var(--accent))] hover:underline tracking-normal normal-case",
       },
-      // Heights are set as "min" heights, because sometimes Ai will place large amount of content
-      // inside buttons. With a min-height they will look appropriate with small amounts of content,
-      // but will expand to fit large amounts of content.
+      // Min-heights (not fixed) so buttons expand gracefully with more content.
       size: {
         default: "min-h-9 px-4 py-2",
-        sm: "min-h-8 rounded-md px-3 text-xs",
-        lg: "min-h-10 rounded-md px-8",
+        sm: "min-h-8 px-3",
+        lg: "min-h-11 px-8 text-sm",
         icon: "h-9 w-9",
       },
     },

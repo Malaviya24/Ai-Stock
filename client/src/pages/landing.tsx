@@ -80,20 +80,20 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16">
-          <div className="flex items-center gap-2">
-            <img src={logoImg} alt="Strategy Lab" className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg shrink-0 object-contain" />
-            <span className="font-bold text-base sm:text-lg" data-testid="text-landing-title">Strategy Lab</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b-4 border-foreground bg-background/95 backdrop-blur-md">
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 bg-foreground flex items-center justify-center shrink-0">
+              <BarChart2 className="w-5 h-5 text-background" strokeWidth={2} />
+            </div>
+            <span className="font-serif font-black text-lg sm:text-xl tracking-tight" data-testid="text-landing-title">Strategy Lab</span>
           </div>
-          <Button
-            onClick={() => navigate("/dashboard")}
-            data-testid="button-get-started-nav"
-            size="sm"
-            className="hidden sm:inline-flex"
-          >
-            Get Started <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="news-label mr-3">Vol. 1 &middot; Est. MMXXVI</span>
+            <Button onClick={() => navigate("/dashboard")} data-testid="button-get-started-nav" size="sm">
+              Read Inside <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
           <Button
             variant="ghost"
             size="icon"
@@ -111,45 +111,57 @@ export default function Landing() {
               className="w-full"
               data-testid="button-get-started-mobile"
             >
-              Get Started <ArrowRight className="w-4 h-4 ml-1" />
+              Read Inside <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         )}
       </nav>
 
-      <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4 sm:mb-6" data-testid="badge-hero">
-            AI-Powered Stock Analysis
-          </Badge>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6" data-testid="text-hero-heading">
-            Master the Market with{" "}
-            <span className="text-primary">12 Proven Strategies</span>
-          </h1>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-6 sm:mb-8 px-2">
-            Real-time scanning, AI scoring, and capital allocation for NIFTY 100 stocks.
-            From RSI to Darvas Box — every strategy at your fingertips.
-          </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Button size="lg" onClick={() => navigate("/dashboard")} data-testid="button-open-dashboard" className="text-sm sm:text-base">
-              Open Dashboard <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/dashboard/scanner")} data-testid="button-try-scanner" className="text-sm sm:text-base">
-              Try Live Scanner
-            </Button>
+      <section className="pt-20 sm:pt-24 pb-10 sm:pb-16 px-4 newsprint-texture">
+        <div className="max-w-screen-xl mx-auto">
+          {/* Masthead edition bar */}
+          <div className="flex items-center justify-between border-y border-foreground py-2 mb-8 sm:mb-10">
+            <span className="news-label">Financial Daily</span>
+            <span className="news-label hidden sm:inline">All the Trades That&rsquo;s Fit to Print</span>
+            <span className="news-label">Free Edition</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-10 sm:mt-14" data-testid="stats-grid">
+          {/* Lead headline — editorial front page */}
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 border border-foreground bg-foreground text-background px-3 py-1 mb-6">
+              <span className="h-1.5 w-1.5 bg-[hsl(var(--accent))]" />
+              <span className="font-mono text-[0.65rem] uppercase tracking-widest">Breaking &middot; AI-Powered Analysis</span>
+            </div>
+            <h1 className="font-serif font-black leading-[0.9] tracking-tighter text-5xl sm:text-6xl lg:text-8xl mb-6" data-testid="text-hero-heading">
+              Master the Market with <span className="italic">20 Proven Strategies</span>
+            </h1>
+            <p className="font-body text-base sm:text-xl text-neutral-700 max-w-2xl mx-auto mb-8 leading-relaxed">
+              Real-time scanning, AI scoring, and capital allocation for NIFTY 100 stocks &mdash; from RSI ladders to Darvas Box breakouts, every edge in one edition.
+            </p>
+            <div className="flex gap-3 justify-center flex-wrap">
+              <Button size="lg" onClick={() => navigate("/dashboard")} data-testid="button-open-dashboard">
+                Open Dashboard <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate("/dashboard/scanner")} data-testid="button-try-scanner">
+                Try Live Scanner
+              </Button>
+            </div>
+          </div>
+
+          {/* Stat ledger — collapsed newspaper grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-l border-foreground mt-12 sm:mt-16" data-testid="stats-grid">
             {stats.map((stat) => (
-              <div key={stat.label} className="bg-card border border-border rounded-xl p-3 sm:p-4 text-center">
-                <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary mx-auto mb-1.5 sm:mb-2" />
-                <div className="text-xl sm:text-2xl font-bold">{stat.value}</div>
-                <div className="text-[10px] sm:text-xs text-muted-foreground">{stat.label}</div>
+              <div key={stat.label} className="border-r border-b border-foreground p-5 text-center hover:bg-neutral-100 transition-colors">
+                <stat.icon className="w-5 h-5 mx-auto mb-2" strokeWidth={1.5} />
+                <div className="font-mono text-2xl sm:text-3xl font-bold">{stat.value}</div>
+                <div className="news-label mt-1">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      <div className="news-ornament py-6 text-xl">&#x2727; &#x2727; &#x2727;</div>
 
       <section className="py-12 sm:py-20 px-4 border-t border-border">
         <div className="max-w-6xl mx-auto">

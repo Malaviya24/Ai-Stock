@@ -19,8 +19,6 @@ import {
   X,
   Bell,
   User,
-  Moon,
-  Sun,
   Store,
   Trophy,
   Award,
@@ -30,7 +28,6 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "@/components/theme-provider";
 
 const navItems = [
   // Core
@@ -70,43 +67,52 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-4 py-5 border-b border-border">
-        <img src={logoImg} alt="Strategy Lab" className="w-8 h-8 rounded-lg shrink-0 object-contain" />
-        <div className="min-w-0">
-          <div className="font-bold text-sm leading-tight truncate" data-testid="text-app-title">Strategy Lab</div>
-          <div className="text-xs text-muted-foreground truncate">Capital Allocation</div>
+      <div className="px-4 py-5 border-b-4 border-foreground">
+        <div className="news-label mb-1.5">Vol. 1 &middot; Est. MMXXVI</div>
+        <div className="font-serif text-2xl font-black leading-none tracking-tight" data-testid="text-app-title">
+          Strategy Lab
         </div>
+        <div className="news-label mt-1.5">The Market Ledger</div>
       </div>
 
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto overscroll-contain">
-        {navItems.map((item) => {
-          const isActive = isPathActive(location, item.path);
-          return (
-            <Link
-              key={item.path}
-              href={item.path}
-              onClick={onNavigate}
-              data-testid={`nav-${item.path.replace(/\//g, "-").slice(1)}`}
-            >
-              <div
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors cursor-pointer ${isActive
-                  ? "bg-primary/15 text-primary font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
+      <nav className="flex-1 px-3 py-4 overflow-y-auto overscroll-contain">
+        <div className="news-label px-2 pb-2">Newsroom</div>
+        <div className="space-y-px">
+          {navItems.map((item, i) => {
+            const isActive = isPathActive(location, item.path);
+            // Insert an editorial section label before the first strategy item.
+            const showStrategiesLabel = i === 3;
+            return (
+              <div key={item.path}>
+                {showStrategiesLabel && (
+                  <div className="news-label px-2 pt-4 pb-2">Strategy Desk</div>
+                )}
+                <Link
+                  href={item.path}
+                  onClick={onNavigate}
+                  data-testid={`nav-${item.path.replace(/\//g, "-").slice(1)}`}
+                >
+                  <div
+                    className={`flex items-center gap-3 px-3 py-2 text-xs font-sans uppercase tracking-wider transition-colors cursor-pointer border-l-2 ${
+                      isActive
+                        ? "bg-foreground text-background border-l-[hsl(var(--accent))] font-semibold"
+                        : "text-muted-foreground border-l-transparent hover:text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                </Link>
               </div>
-            </Link>
-          );
-        })}
+            );
+          })}
+        </div>
       </nav>
 
-      <div className="px-3 py-4 border-t border-border">
+      <div className="px-3 py-4 border-t-4 border-foreground">
         <Link href="/">
-          <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground text-sm" data-testid="button-back-home">
-            <img src={logoImg} alt="" className="w-4 h-4 shrink-0 object-contain" />
-            <span className="truncate">Back to Home</span>
+          <Button variant="outline" size="sm" className="w-full justify-center" data-testid="button-back-home">
+            &larr; Back to Front Page
           </Button>
         </Link>
       </div>
@@ -117,7 +123,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
-  const { theme, toggleTheme } = useTheme();
+  const editionDate = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -171,7 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b border-border flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-background shrink-0 gap-2">
+        <header className="border-b-4 border-foreground flex items-center justify-between px-3 sm:px-4 lg:px-6 bg-background shrink-0 gap-2 py-2.5">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button
               variant="ghost"
@@ -182,23 +193,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <h1 className="text-base sm:text-lg font-semibold truncate" data-testid="text-page-title">{pageTitle}</h1>
+            <div className="min-w-0">
+              <div className="hidden sm:block news-label">Today&rsquo;s Edition &middot; {editionDate}</div>
+              <h1 className="font-serif text-lg sm:text-2xl font-bold leading-tight truncate" data-testid="text-page-title">
+                {pageTitle}
+              </h1>
+            </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              data-testid="button-theme-toggle"
-              className="h-8 w-8 sm:h-9 sm:w-9"
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden md:block text-right news-label leading-tight">
+              NSE / BSE<br />Live Edition
+            </div>
+            <Button variant="ghost" size="icon" data-testid="button-notifications" className="h-9 w-9" aria-label="Notifications">
+              <Bell className="w-4 h-4" strokeWidth={1.5} />
             </Button>
-            <Button variant="ghost" size="icon" data-testid="button-notifications" className="h-8 w-8 sm:h-9 sm:w-9">
-              <Bell className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" data-testid="button-user" className="h-8 w-8 sm:h-9 sm:w-9">
-              <User className="w-4 h-4" />
+            <Button variant="ghost" size="icon" data-testid="button-user" className="h-9 w-9" aria-label="Account">
+              <User className="w-4 h-4" strokeWidth={1.5} />
             </Button>
           </div>
         </header>

@@ -300,3 +300,126 @@
     contain-intrinsic-size: auto 72px;
   }
 }
+
+/* ============================================================
+   NEWSPRINT DESIGN SYSTEM — global identity (light-only)
+   Centralized override so every page inherits the editorial look.
+   ============================================================ */
+
+/* Typeface stack */
+:root {
+  --font-sans: 'Inter', 'Helvetica Neue', sans-serif;
+  --font-serif: 'Playfair Display', 'Times New Roman', serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* Newsprint palette. Applied to :root AND .dark so the (now vestigial) theme
+   toggle can never break the light-only editorial identity. */
+:root,
+.dark {
+  --background: 48 12% 97%;        /* #F9F9F7 warm newsprint off-white */
+  --foreground: 0 0% 7%;           /* #111111 ink black */
+  --border: 0 0% 7%;               /* structural ink borders */
+  --card: 48 12% 97%;
+  --card-foreground: 0 0% 7%;
+  --card-border: 0 0% 7%;
+  --popover: 48 12% 97%;
+  --popover-foreground: 0 0% 7%;
+  --popover-border: 0 0% 7%;
+  --primary: 0 0% 7%;              /* black */
+  --primary-foreground: 48 12% 97%;
+  --secondary: 60 6% 90%;          /* divider grey */
+  --secondary-foreground: 0 0% 7%;
+  --muted: 60 6% 90%;
+  --muted-foreground: 0 0% 40%;    /* metadata / captions */
+  --accent: 0 100% 40%;            /* #CC0000 editorial red (used sparingly) */
+  --accent-foreground: 48 12% 97%;
+  --destructive: 0 100% 40%;
+  --destructive-foreground: 48 12% 97%;
+  --input: 0 0% 7%;
+  --ring: 0 0% 7%;
+  --sidebar: 48 12% 97%;
+  --sidebar-foreground: 0 0% 7%;
+  --sidebar-border: 0 0% 7%;
+  --sidebar-primary: 0 0% 7%;
+  --sidebar-primary-foreground: 48 12% 97%;
+  --sidebar-accent: 60 6% 90%;
+  --sidebar-accent-foreground: 0 0% 7%;
+  --sidebar-ring: 0 0% 7%;
+  --chart-1: 0 0% 7%;
+  --chart-2: 0 0% 38%;
+  --chart-3: 0 0% 60%;
+  --chart-4: 0 100% 40%;
+  --chart-5: 0 0% 22%;
+  --elevate-1: rgba(0,0,0,.035);
+  --elevate-2: rgba(0,0,0,.07);
+  --button-outline: rgba(17,17,17,1);
+  --badge-outline: rgba(17,17,17,1);
+  --radius: 0px;
+}
+
+/* Stark geometry: zero border radius everywhere. No exceptions. */
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+/* Warm paper background with a subtle 4x4 dot-grid texture. */
+body {
+  background-color: hsl(var(--background));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+  color: hsl(var(--foreground));
+}
+
+/* High-contrast display serif for all headings, app-wide. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.015em;
+}
+
+/* Editorial body serif for long-form prose (opt-in). */
+.font-body { font-family: var(--font-body); }
+
+/* Uppercase monospace label — the newsprint metadata treatment. */
+.news-label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.6875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Fine graph-paper texture for major sections. */
+.newsprint-texture { position: relative; }
+.newsprint-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(0deg, transparent 98%, rgba(0,0,0,0.02) 100%),
+    linear-gradient(90deg, transparent 98%, rgba(0,0,0,0.02) 100%);
+  background-size: 3px 3px;
+}
+
+/* Hard offset shadow on hover — the "newspaper cutout" lift. */
+.hard-shadow-hover { transition: transform .15s ease, box-shadow .15s ease; }
+.hard-shadow-hover:hover {
+  box-shadow: 4px 4px 0 0 #111111 !important;
+  transform: translate(-2px, -2px);
+}
+
+/* Grayscale editorial photography, warms to sepia on hover. */
+.news-photo { filter: grayscale(1); transition: filter .2s ease; }
+.news-photo:hover { filter: grayscale(1) sepia(0.35); }
+
+/* Ornamental section divider (use with &#x2727; glyphs). */
+.news-ornament {
+  text-align: center;
+  font-family: var(--font-serif);
+  color: hsl(var(--muted-foreground));
+  letter-spacing: 1em;
+}
