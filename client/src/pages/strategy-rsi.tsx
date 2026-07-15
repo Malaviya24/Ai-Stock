@@ -220,7 +220,7 @@ export default function StrategyRsiLadder() {
                 </div>
 
                 <div className="hidden sm:block overflow-x-auto">
-                  <table className="w-full text-sm" data-testid="table-rsi-results">
+                  <table className="w-full text-sm rows-cv" data-testid="table-rsi-results">
                     <thead>
                       <tr className="border-b border-border">
                         <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>

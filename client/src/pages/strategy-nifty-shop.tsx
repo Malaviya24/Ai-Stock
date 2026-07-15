@@ -218,7 +218,7 @@ export default function StrategyNiftyShop() {
             <Badge variant="outline" className="text-[10px]">{dataSource.length} Stocks</Badge>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-[11px] text-left">
+            <table className="w-full text-[11px] text-left rows-cv">
               <thead>
                 <tr className="border-b bg-muted/20 text-muted-foreground uppercase tracking-wider">
                   <th className="p-3 font-semibold">Symbol</th>

@@ -225,7 +225,7 @@ export default function StrategyMonthlyCandle() {
               </div>
 
               <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm" data-testid="table-bullish-signals">
+                <table className="w-full text-sm rows-cv" data-testid="table-bullish-signals">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>
@@ -333,7 +333,7 @@ export default function StrategyMonthlyCandle() {
               </div>
 
               <div className="hidden sm:block overflow-x-auto">
-                <table className="w-full text-sm" data-testid="table-bearish-signals">
+                <table className="w-full text-sm rows-cv" data-testid="table-bearish-signals">
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>

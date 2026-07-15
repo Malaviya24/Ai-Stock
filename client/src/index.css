@@ -285,4 +285,18 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Performance helper for long tables/lists: lets the browser skip layout &
+   * paint for off-screen rows, keeping scrolling smooth even with many rows.
+   * Apply `rows-cv` to a <table> (targets its rows) or a list container. */
+  .rows-cv > tbody > tr,
+  .rows-cv > tr {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 48px;
+  }
+
+  .items-cv > * {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 72px;
+  }
 }

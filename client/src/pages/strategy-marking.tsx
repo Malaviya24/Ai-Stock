@@ -159,7 +159,7 @@ export default function StrategyMarking() {
               ))}
             </div>
             <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-xs sm:text-sm">
+              <table className="w-full text-xs sm:text-sm rows-cv">
                 <thead>
                   <tr className="border-b text-left text-muted-foreground">
                     {hasScannedData ? (
