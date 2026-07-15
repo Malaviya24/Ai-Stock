@@ -16,3 +16,6 @@ vite.config.ts.*
 # Replit artifacts
 .local/state/
 .config/
+
+# Runtime state (rewritten on every scan; not source code)
+nifty-dma-state.json
