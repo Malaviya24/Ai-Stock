@@ -423,3 +423,34 @@ h1, h2, h3, h4, h5, h6 {
   color: hsl(var(--muted-foreground));
   letter-spacing: 1em;
 }
+
+/* ------------------------------------------------------------
+   Neutralize off-palette accents (blue / purple / indigo) that are
+   hardcoded across the strategy pages. Newsprint is black / white with
+   red as the only accent, so these map to ink and divider grey.
+   Green and red are intentionally preserved for financial gain/loss
+   semantics (a deliberate, legibility-driven adaptation).
+   ------------------------------------------------------------ */
+[class*="text-blue-"],
+[class*="text-purple-"],
+[class*="text-indigo-"],
+[class*="text-cyan-"],
+[class*="text-sky-"] {
+  color: hsl(var(--foreground)) !important;
+}
+
+[class*="border-blue-"],
+[class*="border-purple-"],
+[class*="border-indigo-"],
+[class*="border-cyan-"],
+[class*="border-sky-"] {
+  border-color: hsl(var(--foreground)) !important;
+}
+
+[class*="bg-blue-"],
+[class*="bg-purple-"],
+[class*="bg-indigo-"],
+[class*="bg-cyan-"],
+[class*="bg-sky-"] {
+  background-color: hsl(var(--secondary)) !important;
+}
