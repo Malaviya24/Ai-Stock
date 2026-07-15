@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, TrendingUp, BarChart3, Target, Shield, ArrowUpRight, Download, Filter, RefreshCw, Briefcase, AlertTriangle, History, Info, BookOpen } from "lucide-react";
 import {
@@ -29,6 +30,15 @@ export default function StrategyDMA() {
   const [scanResult, setScanResult] = useState<any>(null);
   const [capital, setCapital] = useState<number>(1000000);
   const [strategyState, setStrategyState] = useState<any>(null);
+  const [scanProgress, setScanProgress] = useState<{ percent: number; processed: number; total: number } | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
 
   // Fetch initial state
   useQuery({
@@ -64,23 +74,51 @@ export default function StrategyDMA() {
   async function handleScan(execute: boolean = false) {
     if (execute) setIsExecuting(true);
     else setIsScanning(true);
-    
+    setScanProgress({ percent: 0, processed: 0, total: 250 });
+
     try {
-      const response = await apiRequest("POST", "/api/scan/dma", { execute });
-      const result = await response.json();
-      setScanResult(result);
-      setStrategyState(result.state); // Update local state with latest from server
-      
-      const msg = execute 
-        ? "Scan & Execution Complete. Check Holdings tab." 
-        : `Scan Complete. Found ${result.buy_count} potential buys.`;
-      
-      toast({ title: execute ? "Execution Complete" : "Scan Complete", description: msg });
+      // Kick off the scan — the server responds instantly and keeps working
+      // in the background, so this request never times out (no 502).
+      await apiRequest("POST", "/api/scan/dma", { execute });
+
+      // Poll the status endpoint until the scan finishes.
+      await new Promise<void>((resolve, reject) => {
+        if (pollRef.current) clearInterval(pollRef.current);
+        pollRef.current = setInterval(async () => {
+          try {
+            const res = await fetch("/api/scan/dma/status");
+            const job = await res.json();
+            setScanProgress({
+              percent: job.percent ?? 0,
+              processed: job.processed ?? 0,
+              total: job.total ?? 250,
+            });
+
+            if (job.stage === "complete") {
+              if (pollRef.current) clearInterval(pollRef.current);
+              const result = job.result;
+              setScanResult(result);
+              if (result?.state) setStrategyState(result.state);
+              const msg = execute
+                ? "Scan & Execution Complete. Check Holdings tab."
+                : `Scan Complete. Found ${result?.buy_count ?? 0} potential buys.`;
+              toast({ title: execute ? "Execution Complete" : "Scan Complete", description: msg });
+              resolve();
+            } else if (job.stage === "error") {
+              if (pollRef.current) clearInterval(pollRef.current);
+              reject(new Error(job.message || "Scan failed"));
+            }
+          } catch (e) {
+            // transient network hiccup during polling — keep trying
+          }
+        }, 2000);
+      });
     } catch (error: any) {
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     } finally {
       setIsScanning(false);
       setIsExecuting(false);
+      setScanProgress(null);
     }
   }
 
@@ -115,6 +153,25 @@ export default function StrategyDMA() {
             </Button>
           </div>
         </div>
+
+        {/* Live scan progress (background job) */}
+        {scanProgress && (isScanning || isExecuting) && (
+          <div className="rounded-xl border bg-card p-4" data-testid="dma-scan-progress">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                Scanning NIFTY LargeMidcap 250…
+              </div>
+              <span className="text-sm font-mono text-muted-foreground">
+                {scanProgress.processed}/{scanProgress.total} ({scanProgress.percent}%)
+              </span>
+            </div>
+            <Progress value={scanProgress.percent} className="h-2" />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Running in the background — safe to wait, this won't time out.
+            </p>
+          </div>
+        )}
 
         {/* Strategy Explanation Accordion */}
         <Accordion type="single" collapsible className="w-full bg-card rounded-xl border px-4">

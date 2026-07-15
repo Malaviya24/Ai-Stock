@@ -133,7 +133,11 @@ export class NiftyDmaService {
     return this.state.capital;
   }
 
-  async scanAndTrade(symbols: string[], executeTrades: boolean = false) {
+  async scanAndTrade(
+    symbols: string[],
+    executeTrades: boolean = false,
+    onProgress?: (processed: number, total: number) => void,
+  ) {
     log(`Starting Nifty DMA Scan for ${symbols.length} symbols...`);
     const results: any[] = [];
     const buyList: any[] = [];
@@ -241,6 +245,7 @@ export class NiftyDmaService {
     // We need 500 days (approx 24 months)
     
     const batchSize = 10;
+    let processed = 0;
     for (let i = 0; i < symbols.length; i += batchSize) {
         const batch = symbols.slice(i, i + batchSize);
         await Promise.all(batch.map(async (symbol) => {
@@ -273,6 +278,8 @@ export class NiftyDmaService {
                 // ignore error
             }
         }));
+        processed = Math.min(symbols.length, i + batchSize);
+        onProgress?.(processed, symbols.length);
     }
 
     // Sort by lowest CMP first

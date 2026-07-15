@@ -31,6 +31,21 @@ let LTVI_PROGRESS: {
   message?: string;
 } = { total: 0, processed: 0, stage: "idle" };
 
+// Generic background-scan job tracker. Heavy scans run in the background and
+// report progress here so the frontend can poll instead of holding a long
+// HTTP request open (which Render's gateway would kill with a 502).
+type ScanJob = {
+  total: number;
+  processed: number;
+  stage: "idle" | "running" | "complete" | "error";
+  startedAt?: string;
+  finishedAt?: string;
+  message?: string;
+  result?: any;
+};
+
+const DMA_SCAN_JOB: ScanJob = { total: 0, processed: 0, stage: "idle" };
+
 const NIFTY_50_SYMBOLS = [
   "ADANIENT.NS", "ADANIPORTS.NS", "APOLLOHOSP.NS", "ASIANPAINT.NS", "AXISBANK.NS",
   "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BPCL.NS", "BHARTIARTL.NS",
@@ -3155,40 +3170,70 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/scan/dma", async (req, res) => {
-    try {
-      // Use explicit NIFTY LargeMidcap 250 Universe
-      const { execute = false } = req.body;
-      const result = await niftyDmaService.scanAndTrade(NIFTY_LARGEMIDCAP_250_SYMBOLS, execute);
-      
-      // Map to old response format for partial compatibility if needed, 
-      // OR update frontend to use new structure. 
-      // The frontend uses "all_results", "buy_count", etc.
-      // Let's return the full state + scan results
-      
-      const { state, scanResults } = result;
-      
-      // Compatibility mapping
-      const buyStocks = scanResults.buyList;
-      const allResults = [
-          ...buyStocks.map((s: any) => ({ ...s, signal: "DMA_BUY" })),
-          // Add others if we had full list, but service only returns buyList for efficiency?
-          // The service returns "buyList" which are new opportunities.
-      ];
+  // Poll this to track a background DMA scan's progress and get the result.
+  app.get("/api/scan/dma/status", (_req, res) => {
+    const percent =
+      DMA_SCAN_JOB.total > 0
+        ? +(100 * (DMA_SCAN_JOB.processed / DMA_SCAN_JOB.total)).toFixed(1)
+        : 0;
+    res.json({ ...DMA_SCAN_JOB, percent });
+  });
 
-      res.json({
-        success: true,
-        state,
-        scanResults,
-        // Legacy fields for basic compatibility (though frontend will be updated)
-        total_scanned: NIFTY_LARGEMIDCAP_250_SYMBOLS.length,
-        buy_count: buyStocks.length,
-        all_results: allResults
-      });
-    } catch (error: any) {
-      log(`DMA scan failed: ${error.message}`);
-      res.status(500).json({ message: "DMA scan failed: " + error.message });
+  app.post("/api/scan/dma", async (req, res) => {
+    // If a scan is already running, don't start another — just report progress.
+    if (DMA_SCAN_JOB.stage === "running") {
+      const percent =
+        DMA_SCAN_JOB.total > 0
+          ? +(100 * (DMA_SCAN_JOB.processed / DMA_SCAN_JOB.total)).toFixed(1)
+          : 0;
+      return res.status(202).json({ started: false, running: true, ...DMA_SCAN_JOB, percent });
     }
+
+    const execute = !!req.body?.execute;
+
+    // Mark the job as running and respond immediately so the browser's request
+    // returns in well under a second (no gateway timeout / 502).
+    DMA_SCAN_JOB.stage = "running";
+    DMA_SCAN_JOB.processed = 0;
+    DMA_SCAN_JOB.total = NIFTY_LARGEMIDCAP_250_SYMBOLS.length;
+    DMA_SCAN_JOB.startedAt = new Date().toISOString();
+    DMA_SCAN_JOB.finishedAt = undefined;
+    DMA_SCAN_JOB.message = undefined;
+    DMA_SCAN_JOB.result = undefined;
+
+    res.status(202).json({ started: true, running: true, total: DMA_SCAN_JOB.total });
+
+    // Run the actual scan in the background (fire-and-forget).
+    (async () => {
+      try {
+        const { state, scanResults } = await niftyDmaService.scanAndTrade(
+          NIFTY_LARGEMIDCAP_250_SYMBOLS,
+          execute,
+          (processed, total) => {
+            DMA_SCAN_JOB.processed = processed;
+            DMA_SCAN_JOB.total = total;
+          },
+        );
+
+        const buyStocks = scanResults.buyList;
+        DMA_SCAN_JOB.result = {
+          success: true,
+          state,
+          scanResults,
+          total_scanned: NIFTY_LARGEMIDCAP_250_SYMBOLS.length,
+          buy_count: buyStocks.length,
+          all_results: buyStocks.map((s: any) => ({ ...s, signal: "DMA_BUY" })),
+        };
+        DMA_SCAN_JOB.processed = DMA_SCAN_JOB.total;
+        DMA_SCAN_JOB.stage = "complete";
+        DMA_SCAN_JOB.finishedAt = new Date().toISOString();
+      } catch (error: any) {
+        log(`DMA scan failed: ${error.message}`);
+        DMA_SCAN_JOB.stage = "error";
+        DMA_SCAN_JOB.message = error?.message || "DMA scan failed";
+        DMA_SCAN_JOB.finishedAt = new Date().toISOString();
+      }
+    })();
   });
 
   app.post("/api/scan/nifty-dma-car", async (req, res) => {
