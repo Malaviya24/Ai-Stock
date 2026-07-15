@@ -59,11 +59,15 @@ const navItems = [
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [location] = useLocation();
 
-  const isPathActive = (loc: string, base: string) => {
-    if (loc === base) return true;
-    // Mark active for nested routes under base (exact segment match only)
-    return loc.startsWith(base + "/");
-  };
+  // Only the single most-specific matching route is active (longest base).
+  // This prevents "Dashboard" from also lighting up on every sub-route.
+  const activePath = navItems
+    .map((i) => i.path)
+    .filter((p) => location === p || location.startsWith(p + "/"))
+    .sort((a, b) => b.length - a.length)[0];
+
+  const coreItems = navItems.slice(0, 3);
+  const strategyItems = navItems.slice(3);
 
   return (
     <div className="flex flex-col h-full">
@@ -76,34 +80,68 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex-1 px-3 py-4 overflow-y-auto overscroll-contain">
+        {/* Newsroom — core navigation with icons */}
         <div className="news-label px-2 pb-2">Newsroom</div>
         <div className="space-y-px">
-          {navItems.map((item, i) => {
-            const isActive = isPathActive(location, item.path);
-            // Insert an editorial section label before the first strategy item.
-            const showStrategiesLabel = i === 3;
+          {coreItems.map((item) => {
+            const isActive = item.path === activePath;
             return (
-              <div key={item.path}>
-                {showStrategiesLabel && (
-                  <div className="news-label px-2 pt-4 pb-2">Strategy Desk</div>
-                )}
-                <Link
-                  href={item.path}
-                  onClick={onNavigate}
-                  data-testid={`nav-${item.path.replace(/\//g, "-").slice(1)}`}
+              <Link
+                key={item.path}
+                href={item.path}
+                onClick={onNavigate}
+                data-testid={`nav-${item.path.replace(/\//g, "-").slice(1)}`}
+              >
+                <div
+                  className={`flex items-center gap-3 px-3 py-2 text-xs font-sans uppercase tracking-wider transition-colors cursor-pointer border-l-2 ${
+                    isActive
+                      ? "bg-foreground text-background border-l-[hsl(var(--accent))] font-semibold"
+                      : "text-muted-foreground border-l-transparent hover:text-foreground hover:bg-secondary"
+                  }`}
                 >
-                  <div
-                    className={`flex items-center gap-3 px-3 py-2 text-xs font-sans uppercase tracking-wider transition-colors cursor-pointer border-l-2 ${
-                      isActive
-                        ? "bg-foreground text-background border-l-[hsl(var(--accent))] font-semibold"
-                        : "text-muted-foreground border-l-transparent hover:text-foreground hover:bg-secondary"
+                  <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                  <span className="truncate">{item.label}</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Strategy Desk — editorial numbered index, like a newspaper contents page */}
+        <div className="flex items-center gap-2 px-2 pt-5 pb-2">
+          <span className="news-label">Strategy Desk</span>
+          <span className="flex-1 h-px bg-foreground/30" />
+          <span className="font-mono text-[0.6rem] text-muted-foreground">{strategyItems.length} SECTIONS</span>
+        </div>
+        <div className="border-t border-foreground/20">
+          {strategyItems.map((item, idx) => {
+            const isActive = item.path === activePath;
+            const num = String(idx + 1).padStart(2, "0");
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                onClick={onNavigate}
+                data-testid={`nav-${item.path.replace(/\//g, "-").slice(1)}`}
+              >
+                <div
+                  className={`group flex items-center gap-3 px-3 py-2 border-b border-foreground/10 transition-colors cursor-pointer ${
+                    isActive
+                      ? "bg-foreground text-background"
+                      : "text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  <span
+                    className={`font-mono text-xs tabular-nums w-6 text-right shrink-0 ${
+                      isActive ? "text-[hsl(var(--accent))]" : "text-muted-foreground group-hover:text-[hsl(var(--accent))]"
                     }`}
                   >
-                    <item.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                </Link>
-              </div>
+                    {num}
+                  </span>
+                  <span className="font-body text-sm leading-tight truncate">{item.label}</span>
+                  <item.icon className={`w-3.5 h-3.5 shrink-0 ml-auto ${isActive ? "opacity-90" : "opacity-30 group-hover:opacity-70"}`} strokeWidth={1.5} />
+                </div>
+              </Link>
             );
           })}
         </div>
