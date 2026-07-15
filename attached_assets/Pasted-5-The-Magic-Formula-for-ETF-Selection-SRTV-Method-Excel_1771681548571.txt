@@ -1,0 +1,384 @@
+5 . The “Magic Formula” for ETF Selection (SRTV Method) 
+
+Excellent Rajesh 🔥
+Now we convert **Class 5 – SRTV Ratio Strategy** into a **fully implementable real-market system** using:
+
+* ✅ Next.js
+* ✅ Yahoo Finance API / yfinance package
+* ✅ Daily auto scan
+* ✅ ETF rotation engine
+
+I’ll structure this in 4 parts:
+
+1️⃣ Extract exact logic from theory
+2️⃣ Analyze your ETF sheet data
+3️⃣ Convert into algorithm rules
+4️⃣ Generate production-ready AI prompt for automation
+
+---
+
+# 📘 PART 1 — EXACT LOGIC EXTRACTION (NO STORY, ONLY SYSTEM)
+
+## 🔹 Core Formula
+
+[
+SRTV = \frac{Current\ Price}{124\ DMA}
+]
+
+Where:
+
+124 DMA = Average of last 124 trading day closes
+
+---
+
+## 🔹 Entry Rule (Start SIP)
+
+If:
+
+```
+SRTV < 0.96
+```
+
+➡ ETF undervalued
+➡ Start Monthly SIP (not lump sum)
+
+---
+
+## 🔹 Exit Rule (Book Profit)
+
+If:
+
+```
+SRTV > 1.12
+```
+
+➡ ETF overvalued
+➡ Exit position
+➡ Rotate capital to lowest SRTV ETF
+
+---
+
+## 🔹 Strategy Nature
+
+This is:
+
+Mean Reversion Strategy
+Using 124-day moving average as equilibrium
+
+---
+
+# 📊 PART 2 — ANALYSIS OF YOUR ETF DATA
+
+From your sheet:
+
+### 🔥 Deep Undervalued (Strong Candidates)
+
+| ETF      | SRTV |
+| -------- | ---- |
+| ITETF    | 0.88 |
+| ITBEES   | 0.89 |
+| ITIETF   | 0.89 |
+| SBIETFIT | 0.89 |
+| TNIDETF  | 0.90 |
+| MAFANG   | 0.92 |
+| MOREALTY | 0.93 |
+| MAHKTECH | 0.94 |
+
+👉 IT sector ETFs currently most undervalued.
+
+---
+
+### 🟡 Fairly Valued
+
+SRTV between 0.98–1.05
+Most Nifty & Bank ETFs here.
+
+---
+
+### 🔴 Overvalued (Profit Booking Zone)
+
+| ETF           | SRTV      |
+| ------------- | --------- |
+| Gold ETFs     | 1.19–1.20 |
+| Silver ETFs   | 1.31–1.32 |
+| PSU Bank ETFs | ~1.18     |
+
+These are in distribution / greedy zone.
+
+---
+
+# 🎯 INTERPRETATION
+
+Current Rotation Logic:
+
+• Exit Gold/Silver ETFs
+• Avoid PSU Banks
+• Shift capital to IT ETFs
+• Consider Realty ETF
+
+This matches SRTV logic perfectly.
+
+---
+
+# 📈 PART 3 — REAL MARKET IMPLEMENTATION LOGIC
+
+We convert theory into exact algorithm.
+
+---
+
+## STEP 1 — Universe
+
+Only ETFs listed in NSE ETF list
+Filter low liquidity ETFs:
+
+```
+Volume > 50,000 average
+```
+
+---
+
+## STEP 2 — Data Fetch (Yahoo Finance)
+
+For each ETF:
+
+Fetch 1 year daily data.
+
+Compute:
+
+```javascript
+dma124 = average(last 124 closing prices)
+srTV = currentClose / dma124
+```
+
+---
+
+## STEP 3 — Signal Classification
+
+```javascript
+if (srTV < 0.96)
+   signal = "START_SIP"
+
+else if (srTV > 1.12)
+   signal = "BOOK_PROFIT"
+
+else
+   signal = "HOLD"
+```
+
+---
+
+## STEP 4 — Ranking Logic
+
+Sort ETFs by:
+
+```
+Lowest SRTV first
+```
+
+Top 3 lowest SRTV = best SIP candidates
+
+---
+
+## STEP 5 — Rotation Engine
+
+If ETF in portfolio AND SRTV > 1.12:
+
+• Sell
+• Move funds to lowest SRTV ETF
+
+---
+
+# 🚀 MASTER IMPLEMENTATION PROMPT
+
+(For Next.js + Yahoo Finance)
+
+You can directly use this inside OpenAI or backend rule engine.
+
+---
+
+```text
+You are a quantitative ETF timing engine.
+
+Analyze only NSE listed ETFs.
+
+----------------------------------------------------
+STEP 1 — FETCH DATA
+----------------------------------------------------
+
+For each ETF:
+Fetch 1 year daily historical data.
+
+Extract:
+- close price
+- volume
+
+----------------------------------------------------
+STEP 2 — CALCULATE 124 DMA
+----------------------------------------------------
+
+Compute:
+
+124_DMA = average of last 124 closing prices
+
+SRTV = current_close / 124_DMA
+
+----------------------------------------------------
+STEP 3 — CLASSIFY SIGNAL
+----------------------------------------------------
+
+If SRTV < 0.96:
+    signal = "START_SIP"
+    valuation = "Undervalued"
+
+Else if SRTV > 1.12:
+    signal = "BOOK_PROFIT"
+    valuation = "Overvalued"
+
+Else:
+    signal = "HOLD"
+    valuation = "Neutral"
+
+----------------------------------------------------
+STEP 4 — FILTER LIQUIDITY
+----------------------------------------------------
+
+Remove ETFs where:
+Average 20-day volume < 50,000
+
+----------------------------------------------------
+STEP 5 — RANKING
+----------------------------------------------------
+
+Sort all ETFs by ascending SRTV.
+
+Lowest SRTV = highest SIP priority.
+
+----------------------------------------------------
+FINAL OUTPUT FORMAT
+----------------------------------------------------
+
+Return JSON:
+
+{
+  scan_date: "",
+  total_etfs_scanned: "",
+  undervalued_count: "",
+  overvalued_count: "",
+  top_sip_candidates: [
+    {
+      symbol: "",
+      cmp: "",
+      dma124: "",
+      srtv: "",
+      suggested_action: "Start SIP"
+    }
+  ],
+  profit_booking_candidates: [
+    {
+      symbol: "",
+      cmp: "",
+      dma124: "",
+      srtv: "",
+      suggested_action: "Book Profit"
+    }
+  ],
+  neutral_zone: []
+}
+```
+
+---
+
+# 🏗 NEXT.JS IMPLEMENTATION FLOW
+
+### Backend Structure
+
+```
+/lib/etfUniverse.js
+/lib/srtvEngine.js
+/lib/rotationEngine.js
+/app/api/daily-etf-scan/route.js
+```
+
+---
+
+### Example Yahoo Fetch (Node)
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const data = await yahooFinance.historical("ITBEES.NS", {
+  period1: "2024-01-01",
+  period2: "2025-01-01",
+  interval: "1d"
+});
+```
+
+Then:
+
+```javascript
+const last124 = data.slice(-124);
+const dma124 = last124.reduce((sum,d)=>sum+d.close,0)/124;
+const current = data[data.length-1].close;
+const srtv = current/dma124;
+```
+
+---
+
+# 📊 DAILY AUTOMATION
+
+Use cron:
+
+```javascript
+cron.schedule("30 15 * * 1-5", runETFScan);
+```
+
+Runs daily at 3:30 PM.
+
+---
+
+# 🧠 OPTIONAL PROFESSIONAL UPGRADE
+
+If you want to improve:
+
+Add confirmation filter:
+
+```
+SRTV < 0.96
+AND RSI < 45
+AND Volume > 1.2× avg
+```
+
+For exit:
+
+```
+SRTV > 1.12
+AND RSI > 65
+```
+
+This reduces false signals.
+
+---
+
+# 🔥 FINAL SUMMARY
+
+You now have:
+
+✔ Exact 124 DMA formula
+✔ Exact SRTV calculation
+✔ Entry/Exit thresholds
+✔ Liquidity filter
+✔ Rotation model
+✔ Auto ranking system
+✔ Production prompt
+
+---
+
+If you want next:
+
+1️⃣ Full Next.js production backend code
+2️⃣ ETF Dashboard UI (React)
+3️⃣ Backtesting engine (10-year data)
+4️⃣ Compare 124 DMA vs 200 DMA
+5️⃣ Combine SRTV + Darvas System
+
+Tell me next level Rajesh 🚀

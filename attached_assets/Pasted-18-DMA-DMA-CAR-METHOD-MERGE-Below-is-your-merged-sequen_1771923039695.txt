@@ -1,0 +1,367 @@
+18. DMA DMA  + CAR METHOD MERGE
+
+Below is your **merged, sequential 2-Phase Master Prompt**.
+
+It strictly follows your required order:
+
+**Phase 1 → Nifty Dukaan 2025 DMA Strategy (Stock Selection)**
+**Phase 2 → Smart CAR (Strong Buy Confirmation on Selected Stocks Only)**
+
+You can copy this entire prompt into your AI editor.
+
+---
+
+# ✅ COPY THIS FULL MASTER PROMPT 👇
+
+---
+
+# 🚀 PROJECT REQUIREMENT – 2 PHASE STOCK ANALYSIS SYSTEM
+
+Build a **Next.js latest version (App Router)** stock analysis web application that works in **two sequential phases**:
+
+---
+
+# 🔵 PHASE 1 – Nifty Dukaan 2025 DMA Strategy (Stock Selection Engine)
+
+This phase scans the market and selects eligible stocks.
+
+Only stocks that PASS Phase 1 will move to Phase 2.
+
+---
+
+## 🏗 TECH STACK
+
+Use:
+
+* Next.js (App Router)
+* JavaScript (NO TypeScript)
+* yahoo-finance2 package
+* Tailwind CSS
+* Server Components where possible
+* API Route Handlers
+* Clean modular architecture
+* Promise.all for parallel fetching
+
+Install:
+
+```
+npm install yahoo-finance2
+npm install chart.js react-chartjs-2
+```
+
+---
+
+# 📊 PHASE 1 – DMA STRATEGY LOGIC
+
+## 🎯 Universe
+
+Use:
+
+* NIFTY 50
+* NIFTY Next 50
+* NIFTY Midcap 150
+
+Hardcode or load symbols with `.NS` suffix.
+
+Example:
+RELIANCE.NS
+TCS.NS
+HDFCBANK.NS
+
+---
+
+## 📈 DATA REQUIREMENTS
+
+For each stock:
+
+Fetch:
+
+* 300–400 daily candles
+* Daily timeframe only
+
+Compute:
+
+* 50 DMA
+* 100 DMA
+* 200 DMA
+* Current Close Price
+
+---
+
+## 🔥 BUY CONDITIONS (ALL must be true)
+
+1️⃣ Price Structure:
+
+```
+Close > 50 DMA
+Close > 100 DMA
+Close > 200 DMA
+```
+
+2️⃣ Bullish Alignment:
+
+```
+50 DMA > 100 DMA
+100 DMA > 200 DMA
+```
+
+3️⃣ Overextension Filter:
+
+```
+(Close - 200 DMA) / 200 DMA <= 0.10
+```
+
+If ALL true:
+
+```
+Signal = "DMA_BUY"
+```
+
+Else:
+
+```
+Signal = "NO_TRADE"
+```
+
+Only stocks with **DMA_BUY** move to Phase 2.
+
+---
+
+## 🔌 API ROUTE – /api/phase1-scan
+
+Return:
+
+```
+[
+ {
+   symbol,
+   price,
+   ma50,
+   ma100,
+   ma200,
+   distanceFrom200,
+   signal: "DMA_BUY"
+ }
+]
+```
+
+Only return DMA_BUY stocks to Phase 2.
+
+---
+
+# 🟢 PHASE 2 – Smart CAR (Strong Buy Confirmation Engine)
+
+This phase runs ONLY on stocks selected in Phase 1.
+
+Its purpose:
+Filter DMA stocks further and show **Strong Buy confirmation**.
+
+---
+
+# 📊 PHASE 2 – SMART CAR LOGIC
+
+For each stock passed from Phase 1:
+
+Fetch:
+
+* Minimum 365 daily candles
+
+---
+
+## STEP 1 – Detect 52-Week High
+
+Find highest close in last 365 days.
+
+Store:
+
+```
+highDate
+high52Week
+```
+
+---
+
+## STEP 2 – Calculate Cumulative Average (CAR)
+
+From highDate to latest date:
+
+For each day:
+
+```
+CAR_day_n = Average of closing prices from highDate to current day
+```
+
+Store CAR values in array.
+
+---
+
+## STEP 3 – Detect 10-Day Consecutive Rising CAR
+
+Check last 10 CAR values:
+
+Condition:
+
+```
+CAR[n] > CAR[n-1]
+CAR[n-1] > CAR[n-2]
+...
+(10 consecutive days rising)
+```
+
+If TRUE:
+
+```
+CAR_Signal = "STRONG_BUY"
+```
+
+Else:
+
+```
+CAR_Signal = "AVOID"
+```
+
+Even one break → AVOID.
+
+---
+
+# 💰 CAPITAL AVERAGING LOGIC (Only for STRONG_BUY)
+
+User input:
+
+* Invested Capital (example ₹15,000)
+
+Formula:
+
+```
+averageAmount = investedCapital / 10
+recommendedShares = floor(averageAmount / currentPrice)
+```
+
+Return:
+
+```
+{
+  symbol,
+  currentPrice,
+  high52Week,
+  highDate,
+  dmaSignal,
+  carSignal,
+  averageAmount,
+  recommendedShares,
+  last10CAR
+}
+```
+
+---
+
+# 🏗 FINAL PROJECT STRUCTURE
+
+```
+/app
+   /api/phase1-scan/route.js
+   /api/phase2-car/route.js
+   /page.js
+   /components/DMAStockTable.js
+   /components/CARConfirmation.js
+   /components/CombinedResult.js
+   /lib/dma.js
+   /lib/car.js
+   /lib/yahoo.js
+```
+
+---
+
+# 💻 FRONTEND FLOW (SEQUENTIAL EXECUTION)
+
+Step 1:
+User clicks → "Run DMA Scan"
+
+Display:
+
+* DMA eligible stocks only
+
+Step 2:
+User clicks → "Run CAR Confirmation"
+
+System:
+
+* Pass DMA stocks to CAR API
+* Display final Strong Buy stocks
+
+---
+
+# 📊 UI DISPLAY REQUIREMENTS
+
+Table Columns:
+
+* Symbol
+* Current Price
+* 50 DMA
+* 100 DMA
+* 200 DMA
+* % Distance from 200 DMA
+* DMA Signal
+* CAR Signal
+* 52W High
+* Average Amount
+* Recommended Shares
+
+Color Rules:
+
+DMA_BUY → Green
+STRONG_BUY → Dark Green
+AVOID → Red
+
+Add:
+
+* Refresh button
+* Loading spinner
+* Filter STRONG_BUY only
+* Sort by lowest distance from 200 DMA
+* Chart section showing:
+
+  * Price Line
+  * CAR Line overlay
+
+---
+
+# ⚡ PERFORMANCE REQUIREMENTS
+
+* Use Promise.all for stock fetching
+* Add loading states
+* Handle Yahoo API errors
+* Add caching (revalidate 1 day)
+* Avoid rate limits
+* Use async/await
+
+---
+
+# 🎯 IMPORTANT EXECUTION RULES
+
+* Phase 1 must run first
+* Only DMA_BUY stocks go to Phase 2
+* CAR must strictly check 10 rising days
+* Only STRONG_BUY stocks are final actionable stocks
+* Daily timeframe only
+* No emotional logic
+* No blind averaging
+
+---
+
+# 📤 FINAL OUTPUT REQUIREMENT
+
+Provide:
+
+* Full working Next.js project
+* All files separately
+* No explanation text
+* No TypeScript
+* Production-ready structure
+* Must run with `npm run dev`
+
+---
+
+# END OF MASTER PROMPT
+
+---

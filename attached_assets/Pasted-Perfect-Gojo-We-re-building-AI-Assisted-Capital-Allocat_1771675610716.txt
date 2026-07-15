@@ -1,0 +1,386 @@
+Perfect Gojo 🔥
+We’re building **AI-Assisted Capital Allocation System (MVP)**
+And yes — for MVP we can use **Yahoo Finance (free source)**.
+
+Below is your **complete structured `.md` file** you can directly use in your Vibe Coder platform.
+
+---
+
+# 📊 AI-Assisted Capital Allocation System (MVP)
+
+## Real-Time Data + Strategy Engine + AI Layer
+
+---
+
+# 🧠 SYSTEM OVERVIEW
+
+We are building:
+
+> A real-time AI-powered capital allocation engine
+> That combines:
+>
+> * RSI Strategy
+> * Darvas Breakout
+> * 124 DMA ETF Strategy (SRTV)
+> * Risk Management
+> * Capital Position Sizing
+
+---
+
+# 🏗️ TECH STACK (MVP)
+
+## Frontend
+
+* React (Vite / Next.js)
+* Tailwind CSS
+* Recharts (charts)
+* Axios
+
+## Backend
+
+* Node.js
+* Express
+* MongoDB
+* Mongoose
+* Python (optional for AI layer)
+
+## Real-Time Data Source
+
+* Yahoo Finance API (unofficial)
+* npm package: `yahoo-finance2`
+
+---
+
+# 📦 STEP 1 – INSTALL YAHOO FINANCE PACKAGE
+
+```bash
+npm install yahoo-finance2
+```
+
+---
+
+# 📡 STEP 2 – FETCH REAL-TIME MARKET DATA
+
+## Backend: services/marketService.js
+
+```javascript
+import yahooFinance from 'yahoo-finance2';
+
+export const getStockData = async (symbol) => {
+  const result = await yahooFinance.quote(symbol);
+  return result;
+};
+```
+
+### Example Symbols:
+
+* Nifty ETF → `^NSEI`
+* Reliance → `RELIANCE.NS`
+* HDFC Bank → `HDFCBANK.NS`
+* NiftyBees ETF → `NIFTYBEES.NS`
+
+---
+
+# 📊 STEP 3 – FETCH HISTORICAL DATA (For RSI & DMA)
+
+```javascript
+export const getHistoricalData = async (symbol) => {
+  const result = await yahooFinance.historical(symbol, {
+    period1: '2023-01-01',
+    period2: new Date(),
+    interval: '1d'
+  });
+  return result;
+};
+```
+
+---
+
+# 📐 STEP 4 – CALCULATE RSI (Backend Logic)
+
+```javascript
+export const calculateRSI = (data, period = 14) => {
+  let gains = 0;
+  let losses = 0;
+
+  for (let i = 1; i <= period; i++) {
+    const change = data[i].close - data[i - 1].close;
+    if (change > 0) gains += change;
+    else losses -= change;
+  }
+
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+
+  const rs = avgGain / avgLoss;
+  return 100 - (100 / (1 + rs));
+};
+```
+
+---
+
+# 📈 STEP 5 – CALCULATE 124 DMA
+
+```javascript
+export const calculateDMA = (data, days = 124) => {
+  const slice = data.slice(-days);
+  const sum = slice.reduce((acc, item) => acc + item.close, 0);
+  return sum / days;
+};
+```
+
+---
+
+# 📊 STEP 6 – SRTV CALCULATION
+
+```javascript
+export const calculateSRTV = (price, dma124) => {
+  return price / dma124;
+};
+```
+
+### SRTV Rules:
+
+* `< 0.96` → Undervalued (Start SIP)
+* `> 1.12` → Overvalued (Book Profit)
+
+---
+
+# 🚀 STEP 7 – DARVAS BREAKOUT LOGIC
+
+```javascript
+export const calculateBreakout = (data) => {
+  const last5Days = data.slice(-5);
+  const highestHigh = Math.max(...last5Days.map(d => d.high));
+  return highestHigh;
+};
+```
+
+Buy when:
+
+```
+Current Price > Highest High (5 Days)
+```
+
+Target:
+
+```
+Entry Price × 1.06
+```
+
+---
+
+# 💰 STEP 8 – CAPITAL ALLOCATION ENGINE
+
+## Rule:
+
+Divide capital into parts.
+
+Example:
+
+```javascript
+export const allocateCapital = (totalCapital, parts = 10) => {
+  return totalCapital / parts;
+};
+```
+
+---
+
+# 🤖 STEP 9 – AI SCORING LAYER (MVP VERSION)
+
+Instead of full ML initially, use weighted scoring model.
+
+## Scoring Model:
+
+| Factor            | Weight |
+| ----------------- | ------ |
+| RSI Oversold      | 30%    |
+| SRTV Undervalued  | 30%    |
+| Breakout Strength | 20%    |
+| Volume Surge      | 20%    |
+
+Example:
+
+```javascript
+export const calculateScore = (rsi, srtv, breakout) => {
+  let score = 0;
+
+  if (rsi < 35) score += 30;
+  if (srtv < 0.96) score += 30;
+  if (breakout) score += 20;
+
+  return score;
+};
+```
+
+---
+
+# 📊 STEP 10 – FRONTEND DASHBOARD STRUCTURE
+
+## Dashboard Sections
+
+### 1️⃣ Market Overview
+
+* Live price
+* RSI
+* 124 DMA
+* SRTV ratio
+
+### 2️⃣ Strategy Signals
+
+* RSI Buy/Sell
+* Darvas Breakout
+* ETF Undervalued
+
+### 3️⃣ Capital Suggestion
+
+* Suggested lot size
+* Risk exposure %
+* Max drawdown estimate
+
+### 4️⃣ AI Ranking
+
+Top 5 stocks by score.
+
+---
+
+# 🧠 STEP 11 – RISK MANAGEMENT ENGINE
+
+Add:
+
+```javascript
+export const riskCheck = (capitalUsed, totalCapital) => {
+  return (capitalUsed / totalCapital) * 100;
+};
+```
+
+If exposure > 60%:
+Warn user.
+
+---
+
+# 📦 STEP 12 – DATABASE STRUCTURE
+
+## MongoDB Models
+
+### User Model
+
+```javascript
+{
+  name,
+  email,
+  totalCapital,
+  riskProfile
+}
+```
+
+### Portfolio Model
+
+```javascript
+{
+  userId,
+  stockSymbol,
+  entryPrice,
+  quantity,
+  strategyUsed
+}
+```
+
+---
+
+# ⚠ IMPORTANT REALITY CHECK
+
+Yahoo Finance:
+
+* Not fully real-time (1-2 min delay)
+* Good for MVP
+* Not suitable for high-frequency trading
+* No official guarantee
+
+For production:
+
+* Consider paid API:
+
+  * Alpha Vantage
+  * Polygon.io
+  * Twelve Data
+  * NSE official data vendors
+
+---
+
+# 🚀 PHASE 2 (FUTURE)
+
+Add:
+
+* Backtesting engine
+* Monte Carlo simulation
+* ML prediction layer
+* News sentiment analysis
+* Volume spike detection
+* AI portfolio rebalancer
+
+---
+
+# 🏁 FINAL MVP FLOW
+
+1. Fetch live data (Yahoo)
+2. Calculate indicators (RSI, DMA, Breakout)
+3. Apply scoring engine
+4. Allocate capital
+5. Show ranked opportunities
+6. Track portfolio
+
+---
+
+# 🎯 MVP GOAL
+
+Not:
+“Predict market”
+
+But:
+“Assist disciplined capital allocation”
+
+---
+
+# 🧠 ARCHITECTURE DIAGRAM (LOGICAL FLOW)
+
+```
+Yahoo API
+    ↓
+Backend Data Processor
+    ↓
+Indicator Engine
+    ↓
+AI Scoring Layer
+    ↓
+Capital Allocation Engine
+    ↓
+Frontend Dashboard
+```
+
+---
+
+# 🔥 RESULT
+
+You now have:
+✔ Real-time data
+✔ Strategy engine
+✔ AI scoring
+✔ Risk control
+✔ Capital division logic
+✔ Structured architecture
+
+---
+
+If you want next:
+
+* I can give you complete folder structure
+* Or full backend boilerplate
+* Or AI model upgrade version
+* Or proper backtesting engine design
+
+Say:
+
+**“Give me backend structure v1”**
+
+And we go next level 🚀

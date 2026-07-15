@@ -1,0 +1,428 @@
+7. Buy Stock Funtamentally Strong
+
+Excellent Rajesh 🔥
+Now we are entering **Class 7 – Fundamental Data Bank System** (this is institutional-level screening).
+
+You gave:
+
+* Screenshot of Excel data bank
+* Theory explanation
+* Ratios used
+* Screener-based structure
+
+Now I will:
+
+1️⃣ Extract exact implementable logic
+2️⃣ Analyze the image structure
+3️⃣ Convert into algorithmic rules
+4️⃣ Generate production-ready AI prompt
+5️⃣ Structure Next.js + Yahoo Finance architecture
+
+---
+
+# 📊 PART 1 — IMAGE ANALYSIS (Your Excel Screenshot)
+
+From your sheet columns:
+
+### Core Structure Observed
+
+| Column             | Meaning             |
+| ------------------ | ------------------- |
+| BSE Code           | Symbol              |
+| Company Name       | Name                |
+| Sector             | Industry            |
+| Face Value         | Nominal value       |
+| Total Capital      | Share capital       |
+| Total Share        | Outstanding shares  |
+| Book Value         | Net worth per share |
+| Sales in Cr        | Annual revenue      |
+| Net Sale Per Share | Custom ratio        |
+| Net Profit in Cr   | Annual profit       |
+| EPS                | Earnings per share  |
+| Dividend           | Dividend per share  |
+| D/E Ratio          | Debt to equity      |
+| RONW %             | Return on Net Worth |
+| Promoters %        | Holding             |
+| Pledged %          | Risk indicator      |
+| Institutional %    | Smart money         |
+| Market Cap         | Size                |
+| Price              | CMP                 |
+| 52W High           | Peak                |
+| 52W Low            | Bottom              |
+| 52W High/Low Ratio | Volatility          |
+| Enterprise Value   | EV                  |
+
+---
+
+# 🎯 PART 2 — EXACT LOGIC EXTRACTION
+
+He is building:
+
+A comparative fundamental ranking engine.
+
+Not prediction.
+Not timing.
+Comparison + filtering.
+
+---
+
+# 🔷 CORE METRICS HE CARES ABOUT
+
+## 1️⃣ Share on Net Sale (MOST IMPORTANT)
+
+Formula:
+
+```
+Share on Net Sale = Annual Sales / Total Equity Shares
+```
+
+Interpretation:
+
+Higher = more revenue backing per share.
+
+Equivalent to:
+
+```
+Sales Per Share
+```
+
+---
+
+## 2️⃣ 52 Week High / Low Ratio
+
+```
+Volatility Ratio = 52W High ÷ 52W Low
+```
+
+Interpretation:
+
+Higher ratio = more volatile stock.
+
+---
+
+## 3️⃣ Debt to Equity (Risk)
+
+Prefer:
+
+```
+D/E < 1
+```
+
+---
+
+## 4️⃣ Promoter Holding
+
+Prefer:
+
+```
+Promoter % > 50%
+```
+
+---
+
+## 5️⃣ Pledged %
+
+Prefer:
+
+```
+Pledged = 0 or very low
+```
+
+---
+
+## 6️⃣ RONW %
+
+Prefer:
+
+```
+RONW > 15%
+```
+
+---
+
+## 7️⃣ EPS Positive
+
+```
+EPS > 0
+```
+
+---
+
+# 📈 WHAT HE IS ACTUALLY BUILDING
+
+A FUNDAMENTAL FILTER ENGINE.
+
+You rank stocks by:
+
+✔ Strong balance sheet
+✔ Good profitability
+✔ Low debt
+✔ High promoter confidence
+✔ Healthy sales per share
+
+---
+
+# 🧠 PART 3 — CONVERTING TO REAL MARKET ALGORITHM
+
+Now we convert this to automation using:
+
+Next.js + Yahoo Finance
+
+Important note:
+
+Yahoo Finance DOES NOT provide full Indian fundamental fields cleanly.
+
+Better sources:
+
+* yahoo-finance2 (partial fundamentals)
+* Alpha Vantage (limited)
+* Financial Modeling Prep (paid)
+* Screener scraping (risky)
+
+But we can simulate using Yahoo fundamental summary fields.
+
+---
+
+# 🔷 IMPLEMENTABLE RULE ENGINE
+
+---
+
+## STEP 1 — Universe
+
+Apply only to:
+
+• Nifty 50
+OR
+• Sensex 30
+OR
+• Your custom universe
+
+---
+
+## STEP 2 — Fetch Fundamental Data
+
+For each stock:
+
+Fetch:
+
+* Market Cap
+* EPS
+* PE
+* Book Value
+* Total Revenue
+* Net Income
+* Shares Outstanding
+* Debt
+* Equity
+* 52W High
+* 52W Low
+* Promoter Holding (if available)
+
+---
+
+## STEP 3 — Compute Custom Ratios
+
+```javascript
+salesPerShare = annualRevenue / sharesOutstanding
+
+highLowRatio = fiftyTwoWeekHigh / fiftyTwoWeekLow
+
+debtToEquity = totalDebt / totalEquity
+
+earningsYield = EPS / currentPrice
+```
+
+---
+
+## STEP 4 — Fundamental Score System
+
+Create scoring model:
+
+```javascript
+score = 0
+
+if (EPS > 0) score++
+if (RONW > 15) score++
+if (debtToEquity < 1) score++
+if (promoterHolding > 50) score++
+if (pledgedShares < 5) score++
+if (salesPerShare > price) score++
+```
+
+---
+
+## STEP 5 — Rank Companies
+
+Sort by:
+
+```
+score descending
+```
+
+Then display:
+
+Top 10 fundamentally strong stocks.
+
+---
+
+# 🚀 MASTER IMPLEMENTATION PROMPT
+
+(Fundamental Data Bank Engine)
+
+You can use this inside OpenAI or internal rule engine.
+
+---
+
+```text
+You are a fundamental stock screening engine.
+
+IMPORTANT:
+Analyze only stocks belonging to:
+- NIFTY 50
+OR
+- SENSEX 30
+
+Ignore all others.
+
+----------------------------------------------------
+STEP 1 — FETCH DATA
+----------------------------------------------------
+
+For each stock fetch:
+
+- Current Price
+- Market Cap
+- Annual Revenue
+- Net Profit
+- EPS
+- Book Value
+- Shares Outstanding
+- Total Debt
+- Total Equity
+- 52 Week High
+- 52 Week Low
+- Promoter Holding %
+- Pledged %
+
+----------------------------------------------------
+STEP 2 — CALCULATE CUSTOM RATIOS
+----------------------------------------------------
+
+salesPerShare = annualRevenue / sharesOutstanding
+
+highLowRatio = 52W High / 52W Low
+
+debtToEquity = totalDebt / totalEquity
+
+----------------------------------------------------
+STEP 3 — APPLY FUNDAMENTAL FILTER
+----------------------------------------------------
+
+Conditions:
+
+EPS > 0
+AND debtToEquity < 1
+AND promoterHolding > 50
+AND pledged < 5
+AND RONW > 15
+
+----------------------------------------------------
+STEP 4 — SCORING SYSTEM
+----------------------------------------------------
+
+Assign 1 point for each satisfied condition.
+
+Calculate totalScore.
+
+----------------------------------------------------
+STEP 5 — OUTPUT
+----------------------------------------------------
+
+Return JSON:
+
+{
+  symbol: "",
+  sector: "",
+  price: "",
+  eps: "",
+  debt_to_equity: "",
+  promoter_holding: "",
+  pledged_percent: "",
+  ronw: "",
+  sales_per_share: "",
+  high_low_ratio: "",
+  total_score: "",
+  classification: "Strong | Moderate | Weak"
+}
+```
+
+---
+
+# 🏗 NEXT.JS ARCHITECTURE
+
+```
+/lib/fundamentalFetcher.js
+/lib/ratioCalculator.js
+/lib/fundamentalScorer.js
+/app/api/fundamental-scan/route.js
+```
+
+---
+
+# 📦 Yahoo Finance Example (Node)
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const summary = await yahooFinance.quoteSummary("RELIANCE.NS", {
+  modules: ["defaultKeyStatistics","financialData","summaryDetail"]
+});
+```
+
+Extract fields like:
+
+```javascript
+summary.financialData.totalRevenue
+summary.defaultKeyStatistics.sharesOutstanding
+summary.financialData.totalDebt
+summary.financialData.returnOnEquity
+```
+
+---
+
+# 🧠 PROFESSIONAL UPGRADE
+
+You can later add:
+
+✔ Free cash flow
+✔ 3-year sales growth
+✔ ROCE
+✔ PEG ratio
+✔ Piotroski score
+
+---
+
+# 🔥 WHAT YOU NOW HAVE
+
+✔ Automated fundamental data bank
+✔ Custom ratios like Share on Net Sale
+✔ Volatility ratio
+✔ Debt filter
+✔ Promoter confidence filter
+✔ Scoring system
+✔ Index restriction
+
+---
+
+# 🚀 NEXT LEVEL OPTIONS
+
+We can now:
+
+1️⃣ Combine Fundamental + Monthly Candle
+2️⃣ Combine Fundamental + Darvas
+3️⃣ Build 4000 stock database
+4️⃣ Build React dashboard
+5️⃣ Add AI ranking engine
+6️⃣ Create multi-factor portfolio builder
+
+Tell me next level Rajesh 🔥

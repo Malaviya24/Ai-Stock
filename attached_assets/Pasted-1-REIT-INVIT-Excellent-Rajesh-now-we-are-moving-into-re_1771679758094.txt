@@ -1,0 +1,261 @@
+1. REIT/INVIT
+
+Excellent 🔥 Rajesh — now we are moving into **real system automation**.
+
+You want a **clean AI prompt / logic prompt** that you can use inside:
+
+* ✅ Next.js app
+* ✅ Yahoo Finance API
+* ✅ Server-side cron scanner
+* ✅ AI-based screening system
+
+I’ll give you:
+
+1. ✅ Clear Strategy Definition (Human Logic)
+2. ✅ AI Prompt Version (LLM-ready)
+3. ✅ Technical JSON Logic (Backend-ready)
+4. ✅ Yahoo Finance Data Fields Required
+5. ✅ Next.js Implementation Structure
+
+---
+
+# 🎯 STRATEGY SUMMARY (Final Refined Version)
+
+## Universe:
+
+Large liquidity Indian REIT & INVIT only:
+
+* Embassy Office Parks REIT (EMBASSY.NS)
+* Mindspace Business Parks REIT (MINDSPACE.NS)
+* Brookfield India Real Estate Trust (BIRET.NS)
+* India Grid Trust (INDIGRID.NS)
+* PowerGrid Infrastructure Investment Trust (PGINVIT.NS)
+
+---
+
+# ✅ CORE TRADING RULES (Machine Logic)
+
+### BUY Conditions
+
+```
+1. Close > Highest High of last 5 trading days
+2. Breakout day volume > 1.5 × average volume of last 5 days
+3. Close > 50-day moving average
+4. Not within 2% of major 1-year resistance
+```
+
+---
+
+### TARGET
+
+```
+If REIT → Target = Entry × 1.06
+If INVIT → Target = Entry × 1.05
+```
+
+---
+
+### STOP LOSS
+
+```
+If REIT → Stop = Entry × 0.96
+If INVIT → Stop = Entry × 0.97
+```
+
+---
+
+### EXIT CONDITIONS
+
+```
+1. Target Hit
+OR
+2. Close below breakout level
+OR
+3. Close below 50 DMA
+```
+
+---
+
+# 🔥 AI PROMPT (LLM-READY VERSION)
+
+You can use this prompt in OpenAI / AI Agent inside your Next.js:
+
+---
+
+### 📌 MASTER STRATEGY PROMPT
+
+```
+You are a professional stock market trading assistant.
+
+Analyze the given Indian REIT and INVIT data using the following rules:
+
+Universe:
+EMBASSY.NS, MINDSPACE.NS, BIRET.NS, INDIGRID.NS, PGINVIT.NS
+
+Trading Rules:
+
+1. Identify 5-day highest high.
+2. If today's close > 5-day highest high,
+   AND today's volume > 1.5 × 5-day average volume,
+   AND close > 50-day moving average,
+   THEN generate BUY signal.
+
+3. For REIT stocks:
+   Target = Entry × 1.06
+   Stop loss = Entry × 0.96
+
+4. For INVIT stocks:
+   Target = Entry × 1.05
+   Stop loss = Entry × 0.97
+
+5. Generate output in JSON format:
+
+{
+  symbol: "",
+  signal: "BUY" | "HOLD" | "SELL",
+  entry_price: "",
+  target_price: "",
+  stop_loss: "",
+  breakout_level: "",
+  volume_confirmation: true/false,
+  trend_status: ""
+}
+```
+
+---
+
+# 📊 YAHOO FINANCE DATA REQUIRED
+
+Using `yahoo-finance2` package:
+
+You need:
+
+```
+high
+low
+close
+volume
+50dma (calculate manually)
+1-year high (for resistance check)
+```
+
+---
+
+# 📦 NEXT.JS STRUCTURE
+
+## 1️⃣ Install Package
+
+```
+npm install yahoo-finance2
+```
+
+---
+
+## 2️⃣ API Route Example
+
+`/app/api/reit-scan/route.js`
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const symbols = [
+  "EMBASSY.NS",
+  "MINDSPACE.NS",
+  "BIRET.NS",
+  "INDIGRID.NS",
+  "PGINVIT.NS"
+];
+
+export async function GET() {
+  const results = [];
+
+  for (let symbol of symbols) {
+    const data = await yahooFinance.historical(symbol, {
+      period1: "2023-01-01",
+      interval: "1d"
+    });
+
+    const last5 = data.slice(-6, -1);
+    const today = data[data.length - 1];
+
+    const highestHigh = Math.max(...last5.map(d => d.high));
+    const avgVolume = last5.reduce((a, b) => a + b.volume, 0) / 5;
+
+    const close = today.close;
+    const volume = today.volume;
+
+    const buySignal =
+      close > highestHigh &&
+      volume > 1.5 * avgVolume;
+
+    results.push({
+      symbol,
+      buySignal,
+      entry: close,
+      target: close * 1.06,
+      stop: close * 0.96
+    });
+  }
+
+  return Response.json(results);
+}
+```
+
+---
+
+# 🧠 ADVANCED VERSION (OPTIONAL)
+
+You can add:
+
+• RSI filter
+• 200 DMA trend filter
+• Distribution date avoidance
+• Backtest mode
+
+---
+
+# 🚀 WHAT THIS SYSTEM DOES
+
+Every day:
+
+1. Fetch data
+2. Check breakout
+3. Confirm volume
+4. Generate BUY / HOLD
+5. Output target + stop
+6. Show in UI dashboard
+
+---
+
+# 📊 DASHBOARD IDEA
+
+You can show:
+
+| Symbol | Signal | Entry | Target | Stop | Volume Spike |
+| ------ | ------ | ----- | ------ | ---- | ------------ |
+
+---
+
+# 🏆 RESULT
+
+You now have:
+
+✅ Strategy logic
+✅ AI prompt
+✅ API-ready structure
+✅ Next.js integration logic
+✅ Yahoo Finance compatible system
+
+---
+
+If you want next level:
+
+I can now generate:
+
+• Full production-grade scanner
+• Backtesting engine
+• Real-time websocket version
+• MongoDB trade tracking system
+• Full UI dashboard component
+
+Tell me which one you want to build next 🚀

@@ -1,0 +1,171 @@
+17. Smart CAR – Cumulative Average Reversal
+________________________________________
+✅ COPY THIS FULL PROMPT 👇
+________________________________________
+🚀 PROJECT REQUIREMENT
+Build a Next.js latest version (App Router) web application that implements a scientific exit and averaging system called:
+Smart CAR – Cumulative Average Reversal
+The app must:
+1.	Fetch real daily stock data from Yahoo Finance
+2.	Detect 52-week high automatically
+3.	Calculate cumulative average from 52-week high date
+4.	Detect 10-day consecutive rising CAR trend
+5.	Generate signal:
+o	"AVERAGE"
+o	"AVOID HOLD"
+6.	Provide capital-based averaging calculation
+Use:
+•	Next.js (App Router)
+•	JavaScript (NO TypeScript)
+•	yahoo-finance2 package
+•	Tailwind CSS
+•	Server Components where possible
+•	API Route Handlers
+•	Clean modular architecture
+________________________________________
+📦 INSTALLATION
+npm install yahoo-finance2
+npm install chart.js react-chartjs-2
+________________________________________
+📊 DATA REQUIREMENTS
+For selected stock or real time stock data (example: TCS.NS, RELIANCE.NS):
+Fetch:
+•	Daily candles
+•	Minimum 1 year (365 days)
+•	Include:
+o	Date
+o	Close price
+________________________________________
+🧠 CORE SMART CAR LOGIC
+________________________________________
+STEP 1 – Detect 52-Week High
+Find highest close in last 365 days.
+Store:
+highDate = date of highest close
+________________________________________
+STEP 2 – Calculate Cumulative Average (CAR)
+From highDate to latest date:
+For each day:
+CAR_day_n = Average of closing prices from highDate to current day
+Example:
+Day 1 → Avg(1 day)
+Day 2 → Avg(2 days)
+Day 3 → Avg(3 days)
+...
+Day N → Avg(N days)
+Store CAR values in array.
+________________________________________
+STEP 3 – Detect 10-Day Consecutive Rising Trend
+Check last 10 CAR values:
+Condition:
+CAR[n] > CAR[n-1]
+CAR[n-1] > CAR[n-2]
+...
+For 10 continuous days
+If TRUE:
+Signal = "AVERAGE"
+Else:
+Signal = "AVOID HOLD"
+Even 1 break in rising trend → AVOID HOLD
+________________________________________
+💰 CAPITAL AVERAGING LOGIC
+User inputs:
+•	Original invested capital (example: ₹15,000)
+Averaging Rule:
+averageAmount = originalCapital / 10
+Each week:
+•	Buy only averageAmount
+•	Do NOT exceed 1/10th capital
+•	Minimum 1 share rule (if amount too small)
+Return:
+{
+averageAmount,
+recommendedShares,
+signal
+}
+________________________________________
+🏗 PROJECT STRUCTURE
+/app
+/api/car/route.js
+/page.js
+/components/CARScanner.js
+/components/CARChart.js
+/lib/car.js
+/lib/yahoo.js
+________________________________________
+🔌 API ROUTE REQUIREMENT (/api/car)
+Input:
+{
+symbol: "TCS.NS",
+investedCapital: 15000
+}
+Process:
+1.	Fetch 1 year daily data
+2.	Detect 52-week high
+3.	Calculate CAR
+4.	Check last 10-day CAR trend
+5.	Calculate averaging amount
+Return:
+{
+symbol,
+currentPrice,
+high52Week,
+highDate,
+signal, // AVERAGE or AVOID HOLD
+averageAmount,
+recommendedShares,
+last10CAR: []
+}
+________________________________________
+💻 FRONTEND REQUIREMENTS
+UI Inputs:
+•	Stock symbol input
+•	Invested capital input
+•	Run Analysis button
+Display:
+Section 1 – Stock Info
+•	Current price
+•	52-week high
+•	High date
+Section 2 – CAR Trend
+•	Show last 10 CAR values
+•	Green if rising
+•	Red if broken
+Section 3 – Signal Box
+AVERAGE → Green
+AVOID HOLD → Red
+Section 4 – Averaging Calculator
+•	Recommended weekly averaging amount
+•	Recommended shares
+________________________________________
+📈 CHART REQUIREMENT
+Display:
+•	Price line chart
+•	CAR line chart
+Overlay both.
+________________________________________
+⚡ PERFORMANCE REQUIREMENTS
+•	Use async/await
+•	Handle Yahoo API errors
+•	Add loading state
+•	Add caching (revalidate 1 day)
+•	Avoid rate limits
+________________________________________
+🎯 IMPORTANT RULES
+•	Only use daily timeframe
+•	Only check once per week (UI reminder text)
+•	If CAR falling → NEVER average
+•	If CAR rises 10 consecutive days → Average
+•	No emotional logic
+•	No random averaging
+________________________________________
+📤 FINAL OUTPUT REQUIREMENT
+Provide:
+•	Full working Next.js code
+•	All files separately
+•	No explanation text
+•	No TypeScript
+•	Production-ready structure
+•	Runs with npm run dev
+________________________________________
+END OF PROMPT

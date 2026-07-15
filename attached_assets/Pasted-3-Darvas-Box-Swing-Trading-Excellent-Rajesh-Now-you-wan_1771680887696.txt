@@ -1,0 +1,260 @@
+3. Darvas Box Swing Trading 
+Excellent Rajesh 🚀
+
+Now you want a **Master AI Prompt** for:
+
+✅ Auto scan daily
+✅ All REIT / InvIT
+✅ Entire Nifty Large Midcap 250
+✅ Apply BIOS + Darvas + 2.75% rule
+✅ Return only actionable stocks
+
+This prompt is designed for:
+
+* Next.js backend cron job
+* Yahoo Finance data
+* OpenAI analysis layer (optional intelligence)
+* Real daily market scan (post 3:45 PM)
+
+---
+
+# 🎯 OBJECTIVE
+
+Daily after market close:
+
+1. Scan entire universe
+2. Filter GREEN zone stocks
+3. Detect breakout
+4. Apply avoid rule
+5. Return:
+
+   * Buy candidates
+   * Watchlist stocks
+   * Red zone stocks
+
+---
+
+# 🚀 MASTER AUTO-SCAN PROMPT
+
+(For Daily Scheduled Scanner)
+
+You can directly use this inside your OpenAI API call.
+
+---
+
+```text
+You are a professional quantitative trading scanner.
+
+Your task is to scan ALL stocks belonging to:
+
+1) REIT
+2) InvIT
+3) Nifty Large Midcap 250 Index
+
+Ignore all other stocks.
+
+---------------------------------------------------------
+STEP 1 — FOR EACH STOCK
+---------------------------------------------------------
+
+Fetch 1 year daily historical data (1d interval).
+
+Extract:
+- date
+- high
+- low
+- close
+- volume
+
+---------------------------------------------------------
+STEP 2 — BIOS FILTER (Trend Detection)
+---------------------------------------------------------
+
+Find:
+- 52-week high price and date
+- 52-week low price and date
+
+If 52-week low date is more recent than 52-week high date:
+    Zone = GREEN
+Else:
+    Zone = RED
+
+If Zone = RED:
+    Add stock to "red_zone_list"
+    Skip further processing
+
+---------------------------------------------------------
+STEP 3 — DARVAS BREAKOUT
+---------------------------------------------------------
+
+Calculate:
+- Highest High of last 5 trading days (excluding today)
+- 5-day average volume
+
+Breakout condition:
+
+If:
+    today's close > 5-day highest high
+    AND
+    today's volume > 1.5 × 5-day average volume
+
+Then:
+    breakout = true
+Else:
+    breakout = false
+
+If breakout = false:
+    Add to "watchlist"
+    Continue
+
+---------------------------------------------------------
+STEP 4 — ADVANCED 2.75% AVOID RULE
+---------------------------------------------------------
+
+If previous entry exists for this stock:
+
+    upperAvoid = previousEntry × 1.0275
+    lowerAvoid = previousEntry × 0.9725
+
+    If breakout price inside avoid range:
+        Skip stock
+        Add to "avoid_range_list"
+        Continue
+
+---------------------------------------------------------
+STEP 5 — TARGET & RISK
+---------------------------------------------------------
+
+For all valid breakouts:
+
+Target = entry × 1.06
+Stop Loss = entry × 0.96
+
+Each trade consumes 1 capital part.
+Max allowed total entries = 10.
+
+---------------------------------------------------------
+FINAL OUTPUT FORMAT
+---------------------------------------------------------
+
+Return structured JSON:
+
+{
+  scan_date: "",
+  total_scanned: "",
+  green_zone_count: "",
+  breakout_count: "",
+  buy_candidates: [
+    {
+      symbol: "",
+      category: "REIT | INVIT | NIFTY_LARGEMIDCAP250",
+      entry_price: "",
+      target_price: "",
+      stop_loss: "",
+      capital_part_required: 1
+    }
+  ],
+  watchlist: [
+    {
+      symbol: "",
+      reason: "Green but no breakout"
+    }
+  ],
+  red_zone_list: [
+    {
+      symbol: "",
+      reason: "BIOS Red Zone"
+    }
+  ],
+  avoid_range_list: [
+    {
+      symbol: "",
+      reason: "Inside 2.75% avoid range"
+    }
+  ]
+}
+```
+
+---
+
+# ⏰ HOW TO AUTOMATE DAILY
+
+In Next.js:
+
+Use:
+
+```bash
+node-cron
+```
+
+Example schedule:
+
+```javascript
+cron.schedule("30 15 * * 1-5", async () => {
+   runFullUniverseScan();
+});
+```
+
+This runs:
+
+🕒 3:30 PM Monday–Friday
+
+---
+
+# 🏗 SYSTEM ARCHITECTURE FOR AUTO SCAN
+
+```
+/lib/universe.js
+/lib/darvasEngine.js
+/lib/autoScanner.js
+/app/api/run-scan/route.js
+```
+
+Daily Flow:
+
+1. Load all symbols
+2. Loop through each
+3. Fetch Yahoo data
+4. Run Darvas engine
+5. Store results in MongoDB
+6. Return dashboard data
+
+---
+
+# 📊 WHAT YOU GET DAILY
+
+After implementation:
+
+✔ List of safe trend stocks
+✔ List of breakout-ready stocks
+✔ Avoid capital clustering
+✔ Controlled 10-part allocation
+✔ Full systematic discipline
+
+---
+
+# 🔥 OPTIONAL ADVANCED FILTERS (Future Upgrade)
+
+You can later add:
+
+• RSI > 50
+• Price above 50 DMA
+• Price above 200 DMA
+• ATR filter
+• Minimum volume threshold
+
+---
+
+Rajesh 👌
+
+Now you have a **full automated institutional scanner prompt**.
+
+If you want next:
+
+1️⃣ Full auto-scan backend code
+2️⃣ MongoDB storage logic
+3️⃣ Dashboard UI (React)
+4️⃣ Backtesting module
+5️⃣ Telegram signal bot
+
+Tell me which level we build next 🚀

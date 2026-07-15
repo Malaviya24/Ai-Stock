@@ -1,0 +1,185 @@
+6. Candlestick Chart + Monthly Trading System
+Perfect Rajesh 👌🔥
+
+Now we will upgrade the **Class 6 Monthly Candlestick Strategy Prompt** so that:
+
+✅ It applies **ONLY to Nifty 50 stocks**
+OR
+✅ Only to **Sensex 30 stocks**
+❌ Ignore all other stocks
+
+This makes it cleaner, institutional, and safer.
+
+---
+
+# 🎯 UPDATED PROFESSIONAL MASTER PROMPT
+
+## (Monthly Candle Strategy – Restricted to Nifty 50 / Sensex Only)
+
+You can directly use this inside your Next.js + Yahoo Finance backend.
+
+---
+
+```text
+You are a systematic monthly trading engine.
+
+IMPORTANT:
+This strategy must ONLY be applied to stocks that belong to:
+
+1) NIFTY 50 index
+OR
+2) SENSEX 30 index
+
+If stock does not belong to these indices:
+Return:
+{
+  status: "Rejected",
+  reason: "Stock not in Nifty 50 or Sensex 30"
+}
+
+----------------------------------------------------
+STEP 1 — DATA FETCH
+----------------------------------------------------
+
+Fetch 2 years daily historical data from Yahoo Finance.
+
+Aggregate into Monthly OHLC:
+
+Monthly Open = first trading day open
+Monthly High = highest high of month
+Monthly Low = lowest low of month
+Monthly Close = last trading day close
+
+----------------------------------------------------
+STEP 2 — CANDLE IDENTIFICATION
+----------------------------------------------------
+
+If Monthly Close > Monthly Open:
+    candle_type = "Bullish"
+Else:
+    candle_type = "Bearish"
+
+----------------------------------------------------
+STEP 3 — ENTRY RULE
+----------------------------------------------------
+
+On last trading day of month:
+
+If candle_type == "Bullish":
+
+    Entry Price = last trading day close
+    Target = Entry × 1.03
+    StopLoss = Monthly Low
+    Position = Active
+
+Else:
+    No new trade
+
+----------------------------------------------------
+STEP 4 — EXIT RULES (During Next Month)
+----------------------------------------------------
+
+While position is active:
+
+1) If price >= Target:
+       Exit → Target Hit
+
+2) If price <= StopLoss:
+       Exit → Stop Loss Hit
+
+3) If next month closes Bearish:
+       Exit immediately at market price
+       (Reverse Exit Rule)
+
+Reverse rule overrides target/stop if month closes Bearish.
+
+----------------------------------------------------
+STEP 5 — RISK CONTROL
+----------------------------------------------------
+
+• Maximum 1 position per stock
+• Capital allocation fixed per stock
+• No intraday trading
+• Use end-of-day prices only
+
+----------------------------------------------------
+FINAL OUTPUT FORMAT
+----------------------------------------------------
+
+Return structured JSON:
+
+{
+  symbol: "",
+  index_membership: "NIFTY50 | SENSEX30",
+  month: "",
+  candle_type: "",
+  entry_price: "",
+  target_price: "",
+  stop_loss: "",
+  current_price: "",
+  position_status: "No Trade | Active | Target Hit | Stop Hit | Reverse Exit",
+  realized_pnl: "",
+  unrealized_pnl: ""
+}
+```
+
+---
+
+# 🏗 How To Enforce Index Restriction in Next.js
+
+You must maintain a static array:
+
+```javascript
+const nifty50 = ["RELIANCE.NS","TCS.NS","INFY.NS", ...];
+const sensex30 = ["RELIANCE.NS","HDFCBANK.NS", ...];
+
+if (!nifty50.includes(symbol) && !sensex30.includes(symbol)) {
+   return { status: "Rejected" };
+}
+```
+
+---
+
+# 🚀 Optional Professional Upgrade
+
+You can also add:
+
+Only trade if:
+
+```javascript
+Close > 50 DMA
+AND Volume > 20-day average
+```
+
+This removes weak bullish candles.
+
+---
+
+# 🎯 Why This Restriction Is Powerful
+
+✔ High liquidity
+✔ Lower manipulation risk
+✔ Institutional participation
+✔ Better monthly trends
+✔ Lower gap risk
+
+---
+
+Rajesh 🔥
+
+Now your Class 6 system is:
+
+✔ Index restricted
+✔ Fully rule-based
+✔ Monthly disciplined
+✔ Ready for automation
+
+If you want next:
+
+1️⃣ Auto scan all 50 stocks monthly
+2️⃣ Compare Nifty vs Sensex performance
+3️⃣ Build dashboard UI
+4️⃣ Combine with SRTV ETF rotation
+5️⃣ Backtest 10 years
+
+Tell me next level.

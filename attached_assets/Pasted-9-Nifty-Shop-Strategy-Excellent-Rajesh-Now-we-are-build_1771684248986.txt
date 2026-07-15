@@ -1,0 +1,415 @@
+9. Nifty Shop Strategy
+
+Excellent Rajesh 🔥
+Now we are building the **“Nifty Shop” – Advanced RSI + Averaging + Compounding Engine** properly and professionally.
+
+You provided:
+
+* RSI sheets (HDFCBANK, HCLTECH)
+* Compounding sheet with 6.28% target
+* Averaging structure
+* Self-dividend model
+* Emergency rule
+* Nifty 50 / Next 50 restriction
+
+Now I will:
+
+1️⃣ Extract exact mechanical logic (clean algorithm)
+2️⃣ Analyze sheet behavior
+3️⃣ Convert to production trading rules
+4️⃣ Add structural safety improvements
+5️⃣ Generate a MASTER IMPLEMENTATION PROMPT
+6️⃣ Provide Next.js + Yahoo Finance architecture
+
+---
+
+# 📊 PART 1 — IMAGE ANALYSIS
+
+From your screenshots:
+
+### Sheet 1 & 2 (RSI Calculation)
+
+Columns:
+
+* Close
+* Gain / Loss
+* Avg Gain (14)
+* Avg Loss (14)
+* RS
+* RSI
+
+→ Standard Wilder RSI.
+
+Buy happened when RSI ≈ 34.9 (HDFCBANK example).
+Sell triggered when RSI rose above ~65.
+
+---
+
+### Sheet 3 (Compounding Sheet)
+
+Columns:
+
+* Lot size
+* 6.28% profit value
+* Profit amount
+* Brokerage
+* Income tax
+* Profit after tax
+* Self dividend (50%)
+* Growth amount
+* Next trade capital
+
+Example flow:
+
+5000
+→ 5314
+→ Profit ~314
+→ After tax ~288
+→ Self dividend ~144
+→ Growth amount ~144
+→ Next trade = 5144
+
+This confirms:
+
+✔ 6.28% fixed target
+✔ 50% reinvest
+✔ 50% withdrawal
+✔ Pure compounding ladder
+
+---
+
+# 🎯 PART 2 — EXACT NIFTY SHOP LOGIC (NO STORY)
+
+---
+
+# 🔷 STEP 1 — Universe Restriction
+
+Trade ONLY:
+
+* NIFTY 50
+* NIFTY NEXT 50
+
+Reject all other stocks.
+
+---
+
+# 🔷 STEP 2 — RSI Calculation
+
+Use 14-period RSI (Wilder method).
+
+Daily timeframe.
+
+---
+
+# 🔷 STEP 3 — BUY CONDITIONS
+
+Primary Buy:
+
+```javascript
+if (RSI < 35)
+   Buy Lot 1
+```
+
+Averaging levels:
+
+| RSI Level | Action          |
+| --------- | --------------- |
+| < 30      | Buy Lot 2       |
+| < 25      | Buy Lot 3       |
+| < 20      | Buy Lot 4       |
+| < 15      | Buy Lot 5       |
+| < 10      | Buy Lot 6       |
+| < 5       | Buy Lot 7 (max) |
+
+Max 7 lots per stock.
+
+---
+
+# 🔷 STEP 4 — DAILY STOCK SELECTION RULE
+
+If multiple stocks have RSI < 35:
+
+✔ Sort by lowest RSI
+✔ Buy only ONE stock per day
+
+Priority = Most oversold.
+
+---
+
+# 🔷 STEP 5 — AVERAGING RULE (Very Important)
+
+Average ONLY IF:
+
+1️⃣ No new stock with RSI < 35 available
+2️⃣ Current stock price has fallen at least 3.14% from LAST PURCHASE PRICE
+
+Important:
+Not from average price.
+From last buy price.
+
+Formula:
+
+```javascript
+if (currentPrice <= lastBuyPrice * 0.9686)
+   allowAverage = true
+```
+
+---
+
+# 🔷 STEP 6 — EXIT RULE
+
+Sell entire position when:
+
+```javascript
+currentPrice >= averagePrice * 1.0628
+```
+
+Target = 6.28%
+
+No partial selling here.
+Full exit.
+
+---
+
+# 🔷 STEP 7 — CAPITAL STRUCTURE
+
+Initial trade size:
+
+```javascript
+startCapital = totalCapital / 40
+```
+
+Example:
+₹2,00,000 → ₹5,000 first trade.
+
+This ensures survival through 30 levels.
+
+---
+
+# 🔷 STEP 8 — SELF DIVIDEND MODEL
+
+After each profitable exit:
+
+```javascript
+profit = sellValue - investment
+
+growthAmount = profit * 0.5
+selfDividend = profit * 0.5
+
+nextTradeCapital += growthAmount
+```
+
+50% reinvest.
+50% personal withdrawal.
+
+---
+
+# 🔷 STEP 9 — EMERGENCY RULE
+
+Stop averaging if:
+
+```javascript
+currentPrice <= averagePrice * 0.80
+```
+
+OR
+
+Stock removed from Nifty index.
+
+Then:
+Switch to SIP recovery mode.
+
+---
+
+# 📈 STRATEGY CHARACTERISTICS
+
+Works best in:
+✔ Sideways markets
+✔ Large-cap oscillations
+
+Risky in:
+❌ Strong bear market
+❌ Structural downtrend
+
+---
+
+# 🚀 MASTER IMPLEMENTATION PROMPT
+
+(NIFTY SHOP ENGINE – FULL AUTOMATION)
+
+Use this inside AI or backend engine.
+
+---
+
+```text
+You are an automated NIFTY SHOP trading engine.
+
+IMPORTANT:
+Apply only to stocks in:
+- NIFTY 50
+- NIFTY NEXT 50
+
+Reject all other stocks.
+
+----------------------------------------------------
+STEP 1 — FETCH DATA
+----------------------------------------------------
+
+Fetch 1 year daily historical data.
+Calculate 14-period RSI (Wilder).
+
+----------------------------------------------------
+STEP 2 — DAILY BUY SELECTION
+----------------------------------------------------
+
+Identify all stocks where RSI < 35.
+
+If multiple stocks:
+    Select stock with lowest RSI.
+
+Buy only ONE stock per day.
+
+----------------------------------------------------
+STEP 3 — AVERAGING RULE
+----------------------------------------------------
+
+Allow averaging only if:
+
+1) No new stock with RSI < 35 available.
+2) Current price <= lastBuyPrice × 0.9686
+3) Total lots < 7
+
+----------------------------------------------------
+STEP 4 — EXIT RULE
+----------------------------------------------------
+
+If currentPrice >= averagePrice × 1.0628:
+    Sell entire position.
+
+----------------------------------------------------
+STEP 5 — CAPITAL MANAGEMENT
+----------------------------------------------------
+
+Initial trade capital = totalCapital / 40.
+
+After profitable exit:
+
+profit = sellValue - investment
+
+growthAmount = profit × 0.5
+selfDividend = profit × 0.5
+
+Add growthAmount to next trade capital.
+
+----------------------------------------------------
+STEP 6 — EMERGENCY RULE
+----------------------------------------------------
+
+If stock falls 20% below average price:
+    Stop averaging.
+    Switch to SIP recovery mode.
+
+----------------------------------------------------
+OUTPUT JSON
+----------------------------------------------------
+
+{
+  symbol: "",
+  current_rsi: "",
+  lots_used: "",
+  average_price: "",
+  target_price: "",
+  capital_used: "",
+  unrealized_profit: "",
+  next_action: "Buy | Average | Hold | Sell | Emergency Stop"
+}
+```
+
+---
+
+# 🏗 NEXT.JS IMPLEMENTATION STRUCTURE
+
+```
+/lib/rsiEngine.js
+/lib/niftyShopEngine.js
+/lib/capitalManager.js
+/app/api/nifty-shop-scan/route.js
+```
+
+---
+
+# 📦 Yahoo Finance Integration
+
+Install:
+
+```bash
+npm install yahoo-finance2 technicalindicators
+```
+
+Fetch:
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const data = await yahooFinance.historical("HDFCBANK.NS", {
+  period1: "2024-01-01",
+  period2: "2025-01-01",
+  interval: "1d"
+});
+```
+
+RSI:
+
+```javascript
+import { RSI } from "technicalindicators";
+
+const closes = data.map(d => d.close);
+
+const rsi = RSI.calculate({
+  values: closes,
+  period: 14
+});
+```
+
+---
+
+# 🔥 PROFESSIONAL IMPROVEMENT (Highly Recommended)
+
+Add trend filter:
+
+```javascript
+Trade only if price > 200 DMA
+```
+
+This prevents buying strong downtrends.
+
+---
+
+# 📊 WHAT YOU NOW HAVE
+
+You now built:
+
+✔ Darvas Engine
+✔ Weekly ETF Engine
+✔ Monthly Candle Engine
+✔ SRTV ETF Engine
+✔ Fundamental 7-Filter Engine
+✔ RSI Ladder Engine
+✔ Nifty Shop Compounding Engine
+
+This is now a full systematic trading framework.
+
+---
+
+# 🚀 NEXT LEVEL OPTIONS
+
+We can now:
+
+1️⃣ Combine Nifty Shop + BH Filter
+2️⃣ Add AI signal strength scoring
+3️⃣ Build full dashboard
+4️⃣ Add portfolio allocator
+5️⃣ Backtest 10 years
+6️⃣ Add Monte Carlo risk simulation
+
+Tell me next level Rajesh 🔥

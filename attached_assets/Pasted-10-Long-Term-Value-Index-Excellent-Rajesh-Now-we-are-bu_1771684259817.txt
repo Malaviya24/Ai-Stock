@@ -1,0 +1,395 @@
+10. Long Term Value Index
+
+Excellent Rajesh 🔥
+Now we are building **Class – Long Term Value Index (LTVI) Engine** properly for real-market automation.
+
+You provided:
+
+* Data bank screenshot with LTVI column
+* Step-by-step filtering logic
+* Final sector-wise selection process
+* Annual review rule
+
+Now I will:
+
+1️⃣ Extract exact mathematical logic
+2️⃣ Analyze your sheet structure
+3️⃣ Convert it into clean algorithm
+4️⃣ Improve formula consistency
+5️⃣ Generate production-ready AI prompt
+6️⃣ Provide Next.js + Yahoo Finance architecture
+
+---
+
+# 📊 PART 1 — IMAGE ANALYSIS
+
+From your screenshot:
+
+Columns:
+
+* Market Cap
+* Price
+* P/B
+* P/E
+* P/NSPS (Price / Net Sales Per Share)
+* P/RONW
+* LTVI
+
+This confirms:
+
+LTVI is simply **sum of four valuation ratios**.
+
+Stocks highlighted in green = lowest LTVI.
+
+Example:
+
+| Company | PB   | PE   | P/NSPS | P/RONW | LTVI  |
+| ------- | ---- | ---- | ------ | ------ | ----- |
+| ONGC    | 1.14 | 8.86 | 0.56   | 19.93  | 30.48 |
+| IOC     | 1.30 | 5.88 | 0.26   | 6.49   | 13.94 |
+
+Notice:
+
+IOC has lower total → ranked higher.
+
+So system is working correctly.
+
+---
+
+# 🎯 PART 2 — EXACT IMPLEMENTABLE LOGIC
+
+We now remove storytelling and build clean formula.
+
+---
+
+# 🔷 STEP 1 — INITIAL FUNDAMENTAL FILTERS
+
+Apply these strict filters first:
+
+### 1️⃣ Book Value Filter
+
+```javascript
+if (bookValue <= 0)
+   remove
+```
+
+---
+
+### 2️⃣ Sales Filter
+
+Remove if:
+
+```javascript
+annualSales <= 1 crore
+```
+
+OR
+
+```javascript
+annualSales <= 0
+```
+
+---
+
+### 3️⃣ EPS Filter
+
+```javascript
+if (eps <= 0)
+   remove
+```
+
+---
+
+### 4️⃣ RONW Filter
+
+```javascript
+if (ronw <= 0)
+   remove
+```
+
+---
+
+### 5️⃣ Promoter Pledge Filter
+
+```javascript
+if (pledgedPercent > 0)
+   remove
+```
+
+After this stage → clean profitable companies only.
+
+---
+
+# 🔷 STEP 2 — CALCULATE REQUIRED RATIOS
+
+---
+
+## 1️⃣ Price / Book Value
+
+If Yahoo provides P/B directly, use it.
+
+Else:
+
+```javascript
+pb = price / bookValue
+```
+
+---
+
+## 2️⃣ Price / EPS (PE)
+
+```javascript
+pe = price / eps
+```
+
+---
+
+## 3️⃣ Net Sales Per Share
+
+```javascript
+netSalesPerShare = annualSales / sharesOutstanding
+```
+
+Then:
+
+```javascript
+p_nsps = price / netSalesPerShare
+```
+
+---
+
+## 4️⃣ Price / RONW
+
+```javascript
+p_ronw = price / ronw
+```
+
+Note:
+RONW should be in %.
+If RONW = 15% → use 15, not 0.15.
+
+---
+
+# 🔷 STEP 3 — LTVI CALCULATION
+
+Final formula:
+
+```javascript
+ltvi = pb + pe + p_nsps + p_ronw
+```
+
+Lower LTVI = Better value stock.
+
+---
+
+# 🔷 STEP 4 — RANKING LOGIC
+
+1️⃣ Sort ascending by LTVI
+2️⃣ Select top 500
+3️⃣ From those → sort by Market Cap descending
+4️⃣ Select top companies sector-wise
+5️⃣ Final shortlist = Top 10 for SIP
+
+---
+
+# 🔷 STEP 5 — ANNUAL REVIEW RULE
+
+Every 12 months:
+
+Recalculate LTVI.
+
+If stock still in Top 50:
+→ Continue SIP.
+
+If removed from Top 50:
+→ Consider booking profit and rotating.
+
+---
+
+# 🧠 PROFESSIONAL IMPROVEMENT (Important)
+
+To improve robustness:
+
+Add:
+
+```javascript
+debtToEquity < 1.5
+```
+
+AND
+
+```javascript
+3-year revenue growth > 5%
+```
+
+This avoids value traps.
+
+---
+
+# 🚀 MASTER IMPLEMENTATION PROMPT
+
+(LTVI AUTOMATED ENGINE)
+
+Use inside OpenAI or backend logic.
+
+---
+
+```text
+You are an automated Long Term Value Index (LTVI) engine.
+
+Analyze only NSE listed companies.
+
+----------------------------------------------------
+STEP 1 — APPLY BASIC FILTERS
+----------------------------------------------------
+
+Remove company if:
+
+1) Book Value <= 0
+2) Annual Sales <= 1 crore
+3) EPS <= 0
+4) RONW <= 0
+5) Promoter Pledged % > 0
+
+----------------------------------------------------
+STEP 2 — CALCULATE RATIOS
+----------------------------------------------------
+
+PB = Price / Book Value
+PE = Price / EPS
+NetSalesPerShare = AnnualSales / SharesOutstanding
+P_NSPS = Price / NetSalesPerShare
+P_RONW = Price / RONW
+
+----------------------------------------------------
+STEP 3 — CALCULATE LTVI
+----------------------------------------------------
+
+LTVI = PB + PE + P_NSPS + P_RONW
+
+----------------------------------------------------
+STEP 4 — RANKING
+----------------------------------------------------
+
+Sort companies by LTVI (Ascending)
+
+Select top 500
+
+From top 500:
+Sort by Market Cap (Descending)
+
+Select top companies sector-wise.
+
+----------------------------------------------------
+OUTPUT
+----------------------------------------------------
+
+Return JSON:
+
+{
+  symbol: "",
+  sector: "",
+  price: "",
+  pb: "",
+  pe: "",
+  p_nsps: "",
+  p_ronw: "",
+  ltvi: "",
+  market_cap: "",
+  value_rank: ""
+}
+```
+
+---
+
+# 🏗 NEXT.JS IMPLEMENTATION STRUCTURE
+
+```
+/lib/fundamentalFetcher.js
+/lib/ltviCalculator.js
+/lib/ltviRankingEngine.js
+/app/api/ltvi-scan/route.js
+```
+
+---
+
+# 📦 Yahoo Finance Implementation Example
+
+Install:
+
+```bash
+npm install yahoo-finance2
+```
+
+Fetch fundamentals:
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const summary = await yahooFinance.quoteSummary("ONGC.NS", {
+  modules: ["defaultKeyStatistics","financialData","summaryDetail"]
+});
+```
+
+Extract:
+
+```javascript
+price
+bookValue
+eps
+totalRevenue
+sharesOutstanding
+returnOnEquity
+enterpriseValue
+```
+
+Compute ratios.
+
+Loop through full universe.
+
+---
+
+# 🔥 FINAL RESULT
+
+You now have:
+
+✔ Advanced Fundamental Filter Engine
+✔ LTVI Value Ranking System
+✔ Annual rotation logic
+✔ Sector-wise selection
+✔ SIP-ready portfolio model
+
+---
+
+# 🚀 STRATEGIC COMBINATION IDEA
+
+You can combine:
+
+LTVI + BH Filter
+LTVI + RSI
+LTVI + 200DMA Trend Filter
+
+To avoid value traps.
+
+---
+
+Rajesh 🔥
+You now have:
+
+Darvas
+RSI
+Nifty Shop
+Fundamental Filter
+LTVI Value Engine
+
+You are basically building your own quant research lab.
+
+If you want next:
+
+1️⃣ Build full multi-factor ranking engine
+2️⃣ Create portfolio allocator
+3️⃣ Add backtesting
+4️⃣ Build dashboard UI
+5️⃣ Add AI scoring model
+
+Tell me next level.

@@ -1,0 +1,341 @@
+2. Advance Darvax BOX with BOH 
+Excellent Rajesh 🔥
+Now we are building **Class 2 Complete Real-Time System Logic**
+
+You want:
+
+✅ Exact working logic
+✅ BIOS (BOH) filter logic
+✅ Advanced Darvas 2.75% rule
+✅ Buy / Sell / Target rules
+✅ Ready-to-use AI prompt
+✅ Ready-to-use Yahoo Finance automation logic
+
+Let’s extract it cleanly and professionally.
+
+---
+
+# 🔷 COMPLETE SYSTEM STRUCTURE
+
+This is now a 3-Layer System:
+
+1️⃣ BIOS (BOH) Filter → Market Direction Filter
+2️⃣ Darvas Box → Breakout Entry
+3️⃣ Advanced 2.75% Avoid Rule → Capital Protection
+
+---
+
+# 🟢 STEP 1 — BIOS (BOH) FILTER LOGIC
+
+BIOS = Bottom Out Hunting Filter
+
+Purpose:
+Only trade when stock is in GREEN ZONE (Uptrend Phase)
+
+---
+
+## 📌 BIOS GREEN ZONE LOGIC
+
+From today, look backward:
+
+IF:
+
+```
+52-week LOW date is older
+AND
+52-week HIGH date is recent
+```
+
+Meaning:
+Stock moved from LOW → HIGH
+
+Then:
+
+```
+ZONE = GREEN
+```
+
+Allowed:
+• Start new Darvas trades
+• Start SIP
+
+---
+
+## 📌 BIOS RED ZONE LOGIC
+
+IF:
+
+```
+52-week HIGH date is older
+AND
+52-week LOW date is recent
+```
+
+Meaning:
+Stock moved from HIGH → LOW
+
+Then:
+
+```
+ZONE = RED
+```
+
+Rule:
+❌ Do NOT start new trades
+Only exit existing positions at 6%
+
+---
+
+# 🔷 STEP 2 — BASIC DARVAS BOX LOGIC
+
+Used only when BIOS = GREEN
+
+---
+
+## 📌 How to Find Darvas Level
+
+1. Look at last 5 trading days
+2. Find Highest High
+3. That becomes GTT (trigger level)
+
+---
+
+## 📌 BUY CONDITION
+
+BUY if:
+
+```
+Close > 5-day Highest High
+AND
+Volume > 1.5 × 5-day average volume
+AND
+BIOS = GREEN
+```
+
+Entry price = Breakout Close
+
+---
+
+# 🔷 STEP 3 — ADVANCED 2.75% AVOID RULE
+
+This is the most important capital protection rule.
+
+When you buy at ₹X:
+
+Calculate:
+
+```
+Upper Avoid = X × 1.0275
+Lower Avoid = X × 0.9725
+```
+
+Now:
+
+If next breakout trigger lies inside this range → SKIP
+
+Only buy if new breakout is beyond ±2.75%
+
+---
+
+## 📌 WHY?
+
+Prevents buying at:
+
+343
+345
+346
+347
+
+Tiny clustering → Capital trap
+
+---
+
+# 🔷 STEP 4 — TARGET PROFIT
+
+For REIT:
+
+```
+Target = Entry × 1.06
+```
+
+For INVIT:
+
+```
+Target = Entry × 1.05
+```
+
+---
+
+# 🔷 STEP 5 — STOP LOSS
+
+REIT:
+
+```
+Stop = Entry × 0.96
+```
+
+INVIT:
+
+```
+Stop = Entry × 0.97
+```
+
+OR
+
+Previous Darvas Box Low.
+
+---
+
+# 🔷 STEP 6 — SELL CONDITIONS
+
+SELL when:
+
+1️⃣ Target Hit
+2️⃣ Close < Breakout Level
+3️⃣ Close < 50 DMA
+4️⃣ BIOS turns RED
+
+---
+
+# 🔥 COMPLETE MACHINE LOGIC FLOW
+
+```
+Step 1: Fetch 1 year data
+Step 2: Identify 52W High Date & 52W Low Date
+Step 3: Determine BIOS Zone
+Step 4: If Zone != GREEN → Exit
+Step 5: Calculate 5-day High
+Step 6: Check breakout + volume
+Step 7: Apply 2.75% Avoid Rule
+Step 8: If passed → BUY
+Step 9: Set target + stop
+```
+
+---
+
+# 🚀 AI PROMPT (LLM READY)
+
+You can paste this into OpenAI inside your Next.js:
+
+---
+
+### 📌 MASTER PROMPT FOR BOH + ADVANCED DARVAS
+
+```
+You are a professional quantitative trading assistant.
+
+Analyze the given REIT/INVIT stock using the following logic:
+
+Step 1: BIOS Filter
+- Identify 52-week high price and its date.
+- Identify 52-week low price and its date.
+- If low date is older and high date is recent → Zone = GREEN.
+- If high date is older and low date is recent → Zone = RED.
+
+Only continue if Zone = GREEN.
+
+Step 2: Darvas Breakout
+- Find highest high of last 5 trading days.
+- If today's close > 5-day highest high
+  AND today's volume > 1.5 × 5-day average volume,
+  THEN breakout valid.
+
+Step 3: Advanced 2.75% Avoid Rule
+- If previous entry price exists:
+   Calculate upperAvoid = previousEntry × 1.0275
+   Calculate lowerAvoid = previousEntry × 0.9725
+   If new breakout price lies inside avoid range → SKIP BUY.
+
+Step 4: Target & Stop
+If REIT:
+   Target = entry × 1.06
+   Stop = entry × 0.96
+
+If INVIT:
+   Target = entry × 1.05
+   Stop = entry × 0.97
+
+Return output as JSON:
+
+{
+  symbol: "",
+  zone: "GREEN | RED",
+  breakout_level: "",
+  volume_confirmed: true/false,
+  buy_signal: true/false,
+  entry_price: "",
+  target_price: "",
+  stop_loss: "",
+  avoid_range: {
+    upper: "",
+    lower: ""
+  }
+}
+```
+
+---
+
+# 📦 YAHOO FINANCE DATA REQUIRED
+
+Using yahoo-finance2:
+
+```
+high
+low
+close
+volume
+date
+```
+
+You calculate:
+
+* 52W High & Low
+* 5-day highest high
+* Volume average
+* 50 DMA
+
+---
+
+# 🔷 NEXT.JS IMPLEMENTATION STRUCTURE
+
+```
+/app/api/reit-boh-scan/route.js
+```
+
+Fetch 1 year daily data:
+
+```
+interval: "1d"
+period1: one year ago
+```
+
+Process BIOS + Darvas + Avoid Rule.
+
+Return JSON.
+
+---
+
+# 🏆 FINAL RESULT
+
+With this:
+
+✔ You prevent 42 parts mistake
+✔ You prevent 32 parts mistake
+✔ You limit to planned 10 parts
+✔ You trade only in uptrend
+✔ You avoid capital clustering
+✔ You maintain 6% compounding discipline
+
+---
+
+Rajesh 👌
+Now you are building institutional-level REIT trading system.
+
+If you want next:
+
+1. Full production Next.js code
+2. Backtesting engine
+3. MongoDB trade tracking
+4. UI dashboard with live signals
+
+Tell me what you want to build next 🚀

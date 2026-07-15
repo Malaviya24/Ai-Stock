@@ -1,0 +1,383 @@
+8. Technical Analysis – RSI Trading Strategy
+
+Perfect Rajesh 🔥
+Now we build **Class 8 – RSI Multi-Level Averaging Strategy Engine** properly and professionally.
+
+You provided:
+
+* Full Excel calculation sheet
+* Manual RSI calculation logic
+* Buy / Sell ladder system
+* Reset rule (RSI > 50 required before new cycle)
+* Real HDFC example
+
+Now I will:
+
+1️⃣ Extract exact mechanical trading logic
+2️⃣ Analyze sheet structure
+3️⃣ Convert into strict algorithm
+4️⃣ Add safety improvements (optional)
+5️⃣ Generate production-ready AI prompt
+6️⃣ Provide Next.js + Yahoo Finance implementation
+
+---
+
+# 📊 PART 1 — IMAGE ANALYSIS (Your Excel Sheet)
+
+From screenshot:
+
+Columns:
+
+* Date
+* Open
+* High
+* Low
+* Close
+* Gain
+* Loss
+* Avg Gain (14)
+* Avg Loss (14)
+* RS
+* RSI
+* Buy Quantity
+* Investment
+* Total Quantity
+* Total Investment
+* Average Price
+* Profit booking row
+
+Observation:
+
+✔ RSI calculated manually using Wilder method
+✔ Buy triggered when RSI < 35
+✔ Multiple accumulation levels
+✔ Sell when RSI > 65
+✔ Partial selling
+✔ Profit calculated at sell
+
+Very clean ladder-based averaging system.
+
+---
+
+# 🎯 PART 2 — EXACT STRATEGY LOGIC (No Story, Only Rules)
+
+---
+
+# 🔷 STEP 1 — RSI Calculation
+
+Use standard 14-period RSI:
+
+```javascript
+RSI = 100 - (100 / (1 + RS))
+```
+
+Where:
+
+```javascript
+RS = AvgGain(14) / AvgLoss(14)
+```
+
+Use Wilder smoothing.
+
+---
+
+# 🔷 STEP 2 — BUY LEVELS (Averaging Ladder)
+
+Buy signals triggered on CLOSE.
+
+Level structure:
+
+| RSI Level | Action    |
+| --------- | --------- |
+| RSI < 35  | Buy Lot 1 |
+| RSI < 30  | Buy Lot 2 |
+| RSI < 25  | Buy Lot 3 |
+| RSI < 20  | Buy Lot 4 |
+| RSI < 15  | Buy Lot 5 |
+| RSI < 10  | Buy Lot 6 |
+
+Each level triggered only once per cycle.
+
+---
+
+# 🔷 STEP 3 — SELL LEVELS (Distribution Ladder)
+
+| RSI Level | Action     |
+| --------- | ---------- |
+| RSI > 65  | Sell Lot 1 |
+| RSI > 70  | Sell Lot 2 |
+| RSI > 75  | Sell Lot 3 |
+| RSI > 80  | Sell Lot 4 |
+| RSI > 85  | Sell Lot 5 |
+| RSI > 90  | Sell Lot 6 |
+
+---
+
+# 🔥 MOST IMPORTANT RULE (Cycle Reset)
+
+New buying cycle allowed ONLY when:
+
+```javascript
+RSI > 50
+AND
+Later RSI falls below 35 again
+```
+
+This prevents repeated buying while RSI stays low.
+
+---
+
+# 🔷 STEP 4 — Position Tracking
+
+Maintain:
+
+```javascript
+totalQuantity
+totalInvestment
+averagePrice = totalInvestment / totalQuantity
+```
+
+Each lot can be fixed capital (example ₹20,000 per lot).
+
+---
+
+# 🔷 STEP 5 — No Stop Loss (As per his system)
+
+He does NOT use stop loss.
+
+But position exits gradually at RSI upper levels.
+
+---
+
+# 📈 STRATEGY BEHAVIOR
+
+Works best in:
+
+✔ Sideways market
+✔ Oscillating stocks
+✔ High liquidity stocks
+
+Dangerous in:
+
+❌ Strong downtrend
+❌ Falling knife
+
+---
+
+# 🧠 PROFESSIONAL IMPROVEMENT (Optional but recommended)
+
+Add trend filter:
+
+```javascript
+Trade only if price > 200 DMA
+```
+
+OR
+
+```javascript
+Trade only if stock belongs to Nifty 50
+```
+
+You already prefer index stocks — good decision.
+
+---
+
+# 🚀 MASTER IMPLEMENTATION PROMPT
+
+(RSI Ladder Strategy Engine – Nifty 50 Only)
+
+Use this inside OpenAI or rule engine.
+
+---
+
+```text
+You are a systematic RSI ladder trading engine.
+
+IMPORTANT:
+Apply this strategy ONLY to NIFTY 50 stocks.
+
+----------------------------------------------------
+STEP 1 — FETCH DATA
+----------------------------------------------------
+
+Fetch 1 year daily historical data.
+
+Calculate 14-period RSI using Wilder method.
+
+----------------------------------------------------
+STEP 2 — BUY RULES
+----------------------------------------------------
+
+If RSI closes below 35:
+    Buy Lot 1
+
+If RSI closes below 30:
+    Buy Lot 2
+
+If RSI closes below 25:
+    Buy Lot 3
+
+If RSI closes below 20:
+    Buy Lot 4
+
+If RSI closes below 15:
+    Buy Lot 5
+
+If RSI closes below 10:
+    Buy Lot 6
+
+Each level can trigger only once per cycle.
+
+----------------------------------------------------
+STEP 3 — SELL RULES
+----------------------------------------------------
+
+If RSI closes above 65:
+    Sell Lot 1
+
+If RSI closes above 70:
+    Sell Lot 2
+
+If RSI closes above 75:
+    Sell Lot 3
+
+If RSI closes above 80:
+    Sell Lot 4
+
+If RSI closes above 85:
+    Sell Lot 5
+
+If RSI closes above 90:
+    Sell Lot 6
+
+----------------------------------------------------
+STEP 4 — CYCLE RESET RULE
+----------------------------------------------------
+
+New buying cycle allowed only if:
+
+RSI > 50
+AND later RSI falls below 35
+
+----------------------------------------------------
+STEP 5 — POSITION TRACKING
+----------------------------------------------------
+
+Maintain:
+
+totalQuantity
+totalInvestment
+averagePrice
+
+----------------------------------------------------
+FINAL OUTPUT
+----------------------------------------------------
+
+Return JSON:
+
+{
+  symbol: "",
+  current_rsi: "",
+  lots_bought: "",
+  lots_remaining: "",
+  total_quantity: "",
+  average_price: "",
+  current_price: "",
+  unrealized_profit: "",
+  next_buy_level: "",
+  next_sell_level: ""
+}
+```
+
+---
+
+# 🏗 NEXT.JS IMPLEMENTATION
+
+### Install:
+
+```bash
+npm install yahoo-finance2 technicalindicators
+```
+
+---
+
+### Fetch Data
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const data = await yahooFinance.historical("HDFCBANK.NS", {
+  period1: "2024-01-01",
+  period2: "2025-01-01",
+  interval: "1d"
+});
+```
+
+---
+
+### Calculate RSI
+
+```javascript
+import { RSI } from "technicalindicators";
+
+const closes = data.map(d => d.close);
+
+const rsiValues = RSI.calculate({
+  values: closes,
+  period: 14
+});
+```
+
+---
+
+### Example Ladder Logic
+
+```javascript
+if (rsi < 35 && !lot1Bought) buyLot(1);
+if (rsi < 30 && !lot2Bought) buyLot(2);
+if (rsi > 65 && lot1Bought) sellLot(1);
+```
+
+---
+
+# 📊 AUTOMATED SCANNER FOR NIFTY 50
+
+Loop through all 50 stocks:
+
+```javascript
+for (const symbol of nifty50List) {
+   runRSIEngine(symbol);
+}
+```
+
+Schedule daily at market close.
+
+---
+
+# 🔥 WHAT YOU NOW BUILT
+
+You now have:
+
+✔ Darvas Engine
+✔ Weekly ETF Engine
+✔ Monthly Candle Engine
+✔ SRTV ETF Engine
+✔ Fundamental 7-Filter Engine
+✔ RSI Ladder Engine
+
+You now have a full multi-strategy trading framework.
+
+---
+
+# 🚀 NEXT LEVEL OPTIONS
+
+We can now:
+
+1️⃣ Combine RSI + BH Filter
+2️⃣ Combine RSI + 200 DMA trend filter
+3️⃣ Create signal strength scoring system
+4️⃣ Backtest 5–10 years
+5️⃣ Create portfolio allocation AI
+6️⃣ Build React dashboard with heatmap
+
+Tell me next level Rajesh 🔥

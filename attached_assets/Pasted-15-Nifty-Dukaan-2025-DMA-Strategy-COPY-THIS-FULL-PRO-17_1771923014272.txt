@@ -1,0 +1,143 @@
+15. Nifty Dukaan 2025 DMA Strategy
+
+________________________________________
+✅ COPY THIS FULL PROMPT 👇
+________________________________________
+🚀 PROJECT REQUIREMENT PROMPT
+I want to build a Next.js latest version (App Router) stock scanner web application that implements the Nifty Dukaan 2025 DMA Strategy using real market data fetched from Yahoo Finance.
+Use:
+•	Next.js (App Router)
+•	Server Components where possible
+•	API Route (Route Handlers)
+•	Yahoo Finance package (like yahoo-finance2)
+•	Tailwind CSS for UI
+•	No TypeScript (use JavaScript)
+•	Clean modular architecture
+________________________________________
+📊 STRATEGY LOGIC TO IMPLEMENT
+Universe:
+•	NIFTY 50
+•	NIFTY Next 50
+•	NIFTY Midcap 150
+(You can hardcode or load stock symbols with .NS suffix)
+Example:
+RELIANCE.NS
+TCS.NS
+HDFCBANK.NS
+________________________________________
+📈 DATA REQUIREMENTS
+For each stock:
+Fetch:
+•	Last 300–400 daily candles
+•	Daily timeframe only
+Compute:
+•	50 DMA
+•	100 DMA
+•	200 DMA
+•	Current Close Price
+________________________________________
+🔥 BUY SIGNAL CONDITIONS (All must be true)
+1️⃣ Price Structure:
+Close > 50 DMA
+Close > 100 DMA
+Close > 200 DMA
+2️⃣ Bullish Alignment:
+50 DMA > 100 DMA
+100 DMA > 200 DMA
+3️⃣ Overextension Filter:
+(Close - 200 DMA) / 200 DMA <= 0.10
+If all true:
+Signal = "BUY"
+________________________________________
+❌ SELL SIGNAL CONDITIONS
+Close < 50 DMA
+50 DMA < 100 DMA
+100 DMA < 200 DMA
+If true:
+Signal = "SELL"
+Else:
+Signal = "NO TRADE"
+________________________________________
+🧮 FORMULA DEFINITIONS
+DMA Calculation:
+Simple moving average using closing prices.
+Distance from 200 DMA:
+((Close - MA200) / MA200) * 100
+Target Calculation:
+6.28% from entry price
+________________________________________
+🏗️ APPLICATION STRUCTURE
+Create:
+/app
+/api/scan/route.js
+/page.js
+/components/StockTable.js
+/lib/dma.js
+/lib/yahoo.js
+________________________________________
+🔌 API ROUTE LOGIC (/api/scan)
+For each stock:
+1.	Fetch historical daily data (at least 250 days)
+2.	Calculate 50, 100, 200 DMA
+3.	Apply signal logic
+4.	Return JSON:
+[
+{
+symbol: "TCS.NS",
+price: 3890,
+ma50: 3800,
+ma100: 3600,
+ma200: 3400,
+distanceFrom200: 4.2,
+signal: "BUY"
+}
+]
+________________________________________
+💻 FRONTEND UI REQUIREMENTS
+Display table with:
+•	Symbol
+•	Current Price
+•	50 DMA
+•	100 DMA
+•	200 DMA
+•	% Distance from 200 DMA
+•	Signal
+Use Tailwind:
+BUY → Green
+SELL → Red
+NO TRADE → Gray
+Add:
+•	Refresh button
+•	Loading spinner
+•	Sort by distance from 200 DMA ascending
+•	Filter: Show only BUY
+________________________________________
+⚡ PERFORMANCE REQUIREMENTS
+•	Use Promise.all for parallel fetching
+•	Handle API errors gracefully
+•	Avoid rate limit issues
+•	Add caching if possible (Next.js revalidate)
+________________________________________
+🔐 ADVANCED FEATURES (if possible)
+•	Add capital allocation logic (divide capital into 50 parts)
+•	Add 6.28% target projection column
+•	Add export to CSV button
+•	Add daily cron auto refresh
+________________________________________
+📦 PACKAGE REQUIREMENTS
+Install:
+npm install yahoo-finance2
+If needed:
+npm install axios
+________________________________________
+🎯 FINAL OUTPUT EXPECTATION
+Provide:
+•	Complete working code
+•	All files separately
+•	Clean, production-ready structure
+•	No explanation text, only code
+•	Ensure no TypeScript
+•	Ensure it runs with npm run dev
+________________________________________
+END OF PROMPT
+________________________________________

@@ -1,0 +1,400 @@
+9. Fundamentally Strong Buy Stock
+Excellent Rajesh 🔥
+Now we are building the **Class 7 Advanced Fundamental + BH Filter Engine** — this is the most powerful multi-layer filtering system so far.
+
+You gave:
+
+* Full 3900+ company databank screenshot
+* Step-by-step filter logic
+* Final Bottom Out Hunting (BH) concept
+
+Now I will:
+
+1️⃣ Extract exact mathematical logic
+2️⃣ Convert filters into algorithm rules
+3️⃣ Integrate BH (Bottom Hunting) precisely
+4️⃣ Design production-ready system
+5️⃣ Generate master AI prompt
+6️⃣ Provide Next.js + Yahoo Finance implementation structure
+
+---
+
+# 📊 PART 1 — IMAGE STRUCTURE ANALYSIS
+
+From your sheet, columns include:
+
+* BSE Code
+* Company Name
+* Sector
+* Face Value
+* Equity Capital
+* Total Shares
+* Book Value
+* Sales
+* Net Sale Per Share
+* Net Profit
+* EPS
+* Dividend
+* D/E Ratio
+* RONW %
+* Promoters %
+* Pledged %
+* Institutional %
+* Market Cap
+* Price
+* 52W High
+* 52W Low
+* 52W High/Low Ratio
+* Enterprise Value
+
+This confirms he is building:
+
+📌 A structured multi-stage fundamental elimination engine.
+
+---
+
+# 🎯 PART 2 — EXACT IMPLEMENTABLE LOGIC (NO STORY)
+
+We now convert all 7 filters into strict algorithm.
+
+---
+
+# 🔎 FILTER 1 — Book Value Filter
+
+Remove companies where:
+
+```javascript
+bookValue < 10
+OR
+bookValue <= 0
+```
+
+Reason:
+Weak net worth or negative equity.
+
+---
+
+# 🔎 FILTER 2 — ROE / RONW Filter
+
+Remove companies where:
+
+```javascript
+ronw <= 3
+```
+
+Also remove if:
+
+```javascript
+ronw < 0
+```
+
+Reason:
+If bank gives 3%, why invest in business giving less?
+
+---
+
+# 🔎 FILTER 3 — Promoter Pledge Filter
+
+Remove companies where:
+
+```javascript
+pledgedPercent > 0
+```
+
+Even 0.01% → remove.
+
+Strict filter.
+
+---
+
+# 🔎 FILTER 4 — EPS / Profit Filter
+
+Remove companies where:
+
+```javascript
+eps <= 0
+OR
+netProfit <= 0
+```
+
+---
+
+# 🔎 FILTER 5 — Enterprise Value Filter
+
+Remove companies where:
+
+```javascript
+enterpriseValue < 0
+```
+
+Reason:
+Too much idle cash or capital inefficiency.
+
+---
+
+# 🔎 FILTER 6 — Share on Net Sale Filter (Most Important)
+
+First compute:
+
+```javascript
+salesPerShare = annualSales / totalShares
+```
+
+Then compute:
+
+```javascript
+priceToSalesPerShare = price / salesPerShare
+```
+
+Keep companies where:
+
+```javascript
+priceToSalesPerShare <= 2
+```
+
+This is his revised condition.
+
+Earlier <1, now <=2.
+
+---
+
+# 🔎 FILTER 7 — Market Cap Ranking
+
+Sort remaining companies by:
+
+```javascript
+marketCap DESC
+```
+
+Pick top large caps first (liquidity + safety).
+
+---
+
+# 🔥 FINAL FILTER — Bottom Out Hunting (BH Filter)
+
+This is technical + fundamental combination.
+
+Condition:
+
+1️⃣ 52W High Date older
+2️⃣ 52W Low Date more recent
+3️⃣ Current price rising from 52W low
+
+Algorithm:
+
+```javascript
+if (lowDate > highDate)
+   trendZone = "Green"
+else
+   trendZone = "Red"
+```
+
+Then check:
+
+```javascript
+currentPrice > fiftyTwoWeekLow
+AND
+currentPrice > 20DMA
+```
+
+Only keep Green zone stocks.
+
+---
+
+# 📈 PART 3 — FULL SYSTEM FLOW
+
+Universe:
+All NSE stocks (or your database)
+
+Apply filters sequentially:
+
+1. Book value filter
+2. ROE filter
+3. Pledge filter
+4. EPS filter
+5. Enterprise value filter
+6. Sales-per-share filter
+7. Market cap sorting
+8. BH filter
+
+Return final shortlisted stocks.
+
+Expected output:
+1–5 strong stocks.
+
+---
+
+# 🚀 MASTER IMPLEMENTATION PROMPT
+
+(Advanced Fundamental + BH Filter Engine)
+
+Use this in OpenAI or backend system.
+
+---
+
+```text
+You are a multi-layer fundamental stock screening engine.
+
+Analyze only NSE listed stocks.
+
+----------------------------------------------------
+STEP 1 — FETCH FUNDAMENTAL DATA
+----------------------------------------------------
+
+For each stock fetch:
+
+- Book Value
+- RONW (Return on Net Worth)
+- Promoter Pledged %
+- EPS
+- Net Profit
+- Enterprise Value
+- Annual Sales
+- Total Shares
+- Market Cap
+- Current Price
+- 52 Week High (price + date)
+- 52 Week Low (price + date)
+
+----------------------------------------------------
+STEP 2 — APPLY FILTERS
+----------------------------------------------------
+
+Filter 1:
+Remove if Book Value < 10
+
+Filter 2:
+Remove if RONW <= 3
+
+Filter 3:
+Remove if Promoter Pledged % > 0
+
+Filter 4:
+Remove if EPS <= 0 OR Net Profit <= 0
+
+Filter 5:
+Remove if Enterprise Value < 0
+
+Filter 6:
+Compute:
+salesPerShare = annualSales / totalShares
+priceToSalesPerShare = currentPrice / salesPerShare
+
+Keep only if priceToSalesPerShare <= 2
+
+----------------------------------------------------
+STEP 3 — MARKET CAP SORT
+----------------------------------------------------
+
+Sort remaining stocks by Market Cap (Descending)
+
+----------------------------------------------------
+STEP 4 — BOTTOM OUT HUNTING FILTER
+----------------------------------------------------
+
+If 52 Week Low Date > 52 Week High Date:
+    trendZone = Green
+Else:
+    Remove stock
+
+Also confirm:
+currentPrice > 20DMA
+
+----------------------------------------------------
+FINAL OUTPUT
+----------------------------------------------------
+
+Return JSON:
+
+{
+  symbol: "",
+  sector: "",
+  market_cap: "",
+  price: "",
+  book_value: "",
+  ronw: "",
+  eps: "",
+  sales_per_share: "",
+  price_to_sales_per_share: "",
+  fifty_two_week_high: "",
+  fifty_two_week_low: "",
+  trend_zone: "Green",
+  qualification_status: "Qualified"
+}
+```
+
+---
+
+# 🏗 NEXT.JS ARCHITECTURE
+
+```
+/lib/fundamentalFetcher.js
+/lib/filterEngine.js
+/lib/bhEngine.js
+/app/api/advanced-screen/route.js
+```
+
+---
+
+# 📦 Yahoo Finance Example
+
+```javascript
+import yahooFinance from "yahoo-finance2";
+
+const summary = await yahooFinance.quoteSummary("IDFCFIRSTB.NS", {
+  modules: ["defaultKeyStatistics","financialData","summaryDetail","price"]
+});
+```
+
+Extract:
+
+* returnOnEquity
+* totalRevenue
+* totalDebt
+* sharesOutstanding
+* enterpriseValue
+* fiftyTwoWeekHigh
+* fiftyTwoWeekLow
+
+For 52W dates:
+Use historical data to detect date of highest high and lowest low.
+
+---
+
+# 🧠 PROFESSIONAL IMPROVEMENTS (OPTIONAL)
+
+You can add:
+
+✔ ROCE > 12%
+✔ 3-year sales CAGR > 10%
+✔ Debt/EBITDA < 3
+✔ Institutional Holding > 10%
+✔ Price above 200 DMA
+
+---
+
+# 🔥 WHAT YOU NOW HAVE
+
+You now built:
+
+Darvas Engine
+SRTV ETF Engine
+Monthly Candle Engine
+Weekly ETF Contrarian Engine
+Fundamental Data Bank
+Advanced Fundamental + BH Filter Engine
+
+You now have a complete institutional multi-factor system.
+
+---
+
+If you want next:
+
+1️⃣ Combine all filters into unified ranking engine
+2️⃣ Build scoring model (weighted)
+3️⃣ Add backtesting
+4️⃣ Build React dashboard
+5️⃣ Build portfolio optimizer
+6️⃣ Add auto email alert system
+
+Tell me next level Rajesh 🔥

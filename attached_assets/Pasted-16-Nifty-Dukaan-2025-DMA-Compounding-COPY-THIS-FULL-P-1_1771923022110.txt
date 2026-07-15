@@ -1,0 +1,188 @@
+16.  Nifty Dukaan 2025 DMA Compounding
+________________________________________
+✅ COPY THIS FULL PROMPT 👇
+________________________________________
+🚀 PROJECT REQUIREMENT
+Build a Next.js latest version (App Router) web application that:
+1.	Fetches real market data from Yahoo Finance
+2.	Applies Nifty Dukaan DMA strategy to generate signals
+3.	Implements a Compounding Engine based on 6.28% target
+4.	Simulates growth from ₹15,000 to ₹1 Crore
+5.	Includes taxation, brokerage, and 50% self-dividend model
+Use:
+•	Next.js (App Router)
+•	JavaScript (NO TypeScript)
+•	yahoo-finance2 package
+•	Tailwind CSS
+•	Server Components where possible
+•	API Route Handlers
+•	Clean modular structure
+________________________________________
+📊 DATA SOURCE
+Use:
+npm install yahoo-finance2
+Fetch:
+•	Daily timeframe
+•	Minimum 300 candles
+•	Stocks with .NS suffix
+Example:
+RELIANCE.NS
+TCS.NS
+HDFCBANK.NS
+________________________________________
+🧠 STRATEGY LOGIC TO IMPLEMENT
+________________________________________
+🔥 PART 1 – DMA SIGNAL ENGINE
+Calculate:
+•	50 DMA
+•	100 DMA
+•	200 DMA
+•	Current Close
+________________________________________
+BUY SIGNAL (All Must Be True)
+Close > 50 DMA
+Close > 100 DMA
+Close > 200 DMA
+50 DMA > 100 DMA
+100 DMA > 200 DMA
+((Close - 200 DMA) / 200 DMA) <= 0.10
+If true:
+Signal = BUY
+________________________________________
+SELL SIGNAL
+Close < 50 DMA
+50 DMA < 100 DMA
+100 DMA < 200 DMA
+If true:
+Signal = SELL
+Else:
+Signal = NO TRADE
+________________________________________
+💰 PART 2 – COMPOUNDING ENGINE
+Initial Capital = ₹15,000
+Target Per Trade = 6.28%
+After each successful trade:
+Step 1 – Calculate Gross Profit:
+grossProfit = capital × 0.0628
+Step 2 – Deduct Brokerage (configurable input)
+Step 3 – Deduct Tax:
+Income Tax = 20%
+Cess = 4% of tax
+totalTax = tax + cess
+Step 4 – Final Profit:
+finalProfit = grossProfit – brokerage – totalTax
+Step 5 – Split Profit:
+withdraw = finalProfit × 0.50
+reinvest = finalProfit × 0.50
+Step 6 – New Capital:
+capital = capital + reinvest
+Repeat until:
+capital >= 1,00,00,000
+Track:
+•	Total steps required
+•	Total withdrawn income
+•	Years required (1 trade per week assumption)
+•	CAGR
+________________________________________
+🏗 PROJECT STRUCTURE
+/app
+/api/scan/route.js
+/api/compound/route.js
+/page.js
+/components/StockTable.js
+/components/CompoundSimulator.js
+/lib/dma.js
+/lib/compound.js
+/lib/yahoo.js
+________________________________________
+🔌 API REQUIREMENTS
+/api/scan
+Return:
+[
+{
+symbol,
+price,
+ma50,
+ma100,
+ma200,
+distanceFrom200,
+signal
+}
+]
+/api/compound
+Input:
+{
+startingCapital,
+brokeragePerTrade
+}
+Return:
+{
+stepsRequired,
+yearsRequired,
+totalWithdrawn,
+finalCapital,
+CAGR
+}
+________________________________________
+💻 FRONTEND UI REQUIREMENTS
+Section 1 – Stock Scanner
+Display:
+•	Symbol
+•	Current Price
+•	50 DMA
+•	100 DMA
+•	200 DMA
+•	% Distance from 200
+•	Signal
+Color Rules:
+BUY → Green
+SELL → Red
+NO TRADE → Gray
+Add:
+•	Filter BUY only
+•	Sort by lowest distance from 200 DMA
+•	Refresh button
+________________________________________
+Section 2 – Compounding Simulator
+Inputs:
+•	Starting Capital
+•	Brokerage per trade
+•	Target % (default 6.28)
+•	Profit split % (default 50%)
+Display:
+•	Step table
+•	Growth chart (use chart library if needed)
+•	Final years to 1 crore
+•	Total withdrawn income
+•	CAGR
+________________________________________
+⚡ PERFORMANCE REQUIREMENTS
+•	Use Promise.all for stock fetching
+•	Add loading state
+•	Add error handling
+•	Add caching (Next.js revalidate)
+•	Avoid Yahoo API rate limits
+________________________________________
+📈 ADVANCED FEATURES
+•	Add weekly trade simulation based on real BUY signals
+•	Add hazard fund simulation (liquid fund interest)
+•	Add CSV export
+•	Add backtesting mode
+________________________________________
+📦 INSTALLATION
+npm install yahoo-finance2
+npm install chart.js react-chartjs-2
+Ensure it runs with:
+npm run dev
+________________________________________
+🎯 FINAL OUTPUT REQUIREMENT
+Provide:
+•	Full working project code
+•	All files separately
+•	No explanation
+•	No TypeScript
+•	Production-ready structure
+•	Clean reusable functions
+________________________________________
+END OF PROMPT
+________________________________________
