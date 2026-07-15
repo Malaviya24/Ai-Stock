@@ -70,6 +70,12 @@ export default function StrategyFundamental() {
   const strongCount = strongCandidates.length;
   const watchlistCount = watchlistCandidates.length;
 
+  // Count stocks whose live data could not be fetched (e.g. delisted BSE codes
+  // or a Yahoo hiccup) so the user is informed instead of silently seeing 0.
+  const dataErrorCount = dataSource.filter(
+    (s: any) => typeof s.bohStatus === "string" && s.bohStatus.toLowerCase().includes("error"),
+  ).length;
+
   return (
     <DashboardLayout>
       <div className="space-y-4 sm:space-y-6">
@@ -135,6 +141,36 @@ export default function StrategyFundamental() {
             </div>
           </div>
         </div>
+
+        {scanResult && (
+          <div
+            className={`rounded-xl p-4 text-xs sm:text-sm border flex items-start gap-2.5 ${
+              dataErrorCount > 0
+                ? "bg-orange-500/10 border-orange-500/20 text-orange-700 dark:text-orange-400"
+                : "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400"
+            }`}
+            data-testid="banner-scan-status"
+          >
+            {dataErrorCount > 0 ? (
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            ) : (
+              <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
+            )}
+            <div>
+              <strong>Scan complete.</strong> Analyzed {totalScanned} stocks — {strongCount} strong candidate{strongCount === 1 ? "" : "s"}, {watchlistCount} on watchlist.
+              {dataErrorCount > 0 && (
+                <span className="block mt-1">
+                  Note: live data for {dataErrorCount} stock{dataErrorCount === 1 ? "" : "s"} could not be fetched (likely delisted BSE codes or a temporary data-source limit). Those rows show a "data error" status and were skipped from live checks.
+                </span>
+              )}
+              {strongCount === 0 && dataErrorCount === 0 && (
+                <span className="block mt-1">
+                  No stocks passed all filters this run — that is a valid result of the strict criteria, not an error.
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-xs sm:text-sm text-yellow-700 dark:text-yellow-400">
           <strong>RISK NOTE:</strong> This is educational screening logic only. Not an investment recommendation. Please consult a financial advisor before trading.
