@@ -47,9 +47,17 @@ async function withRetry<T>(fn: () => Promise<T>, attempts: number = 3, baseDela
  * Yahoo rate-limits (HTTP 429) when many requests arrive at once from a
  * single (especially cloud/datacenter) IP. Limiting concurrency + spacing
  * requests keeps us under the limit so scans work on hosts like Render.
+ *
+ * Since we now use the crumb-free chart() endpoint (much more tolerant than
+ * the old quote() crumb endpoint), we can run more requests in parallel so
+ * large scans (200-300 symbols) finish before Render's gateway times out
+ * (which otherwise shows up as a generic 502 to the user).
  */
-const YAHOO_MAX_CONCURRENT = 2;
-const YAHOO_MIN_GAP_MS = 250;
+const YAHOO_MAX_CONCURRENT = 6;
+const YAHOO_MIN_GAP_MS = 60;
+// Hard cap per request so one slow/hung symbol can't block a slot and stall
+// the whole scan (which would push the scan past the gateway timeout).
+const YAHOO_CALL_TIMEOUT_MS = 12000;
 let yahooActive = 0;
 const yahooWaiters: Array<() => void> = [];
 
@@ -70,10 +78,26 @@ function releaseYahooSlot() {
   }
 }
 
+function withTimeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Yahoo call timed out after ${ms}ms`)), ms);
+    fn().then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 async function throttleYahoo<T>(fn: () => Promise<T>): Promise<T> {
   await acquireYahooSlot();
   try {
-    return await fn();
+    return await withTimeout(fn, YAHOO_CALL_TIMEOUT_MS);
   } finally {
     await sleep(YAHOO_MIN_GAP_MS);
     releaseYahooSlot();
