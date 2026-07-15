@@ -28,6 +28,11 @@ export default function StrategyFundamental() {
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
+  // Pagination for the (potentially 400+ row) watchlist table — rendering all
+  // rows at once creates a huge DOM and makes scrolling lag. We show a page at
+  // a time to keep the DOM small and scrolling smooth.
+  const WATCHLIST_PAGE_SIZE = 50;
+  const [watchlistPage, setWatchlistPage] = useState(0);
 
   const { data: signals, isLoading } = useQuery<any[]>({
     queryKey: ["/api/signals", "fundamental"],
@@ -37,6 +42,7 @@ export default function StrategyFundamental() {
   async function handleScan() {
     setIsScanning(true);
     setScanResult(null);
+    setWatchlistPage(0);
     try {
       const response = await apiRequest("POST", "/api/scan/fundamental");
       const result = await response.json();
@@ -75,6 +81,14 @@ export default function StrategyFundamental() {
   const dataErrorCount = dataSource.filter(
     (s: any) => typeof s.bohStatus === "string" && s.bohStatus.toLowerCase().includes("error"),
   ).length;
+
+  // Paginated slice of the watchlist for smooth scrolling.
+  const watchlistTotalPages = Math.max(1, Math.ceil(watchlistCount / WATCHLIST_PAGE_SIZE));
+  const watchlistPageSafe = Math.min(watchlistPage, watchlistTotalPages - 1);
+  const pagedWatchlist = watchlistCandidates.slice(
+    watchlistPageSafe * WATCHLIST_PAGE_SIZE,
+    watchlistPageSafe * WATCHLIST_PAGE_SIZE + WATCHLIST_PAGE_SIZE,
+  );
 
   return (
     <DashboardLayout>
@@ -307,7 +321,7 @@ export default function StrategyFundamental() {
                     </tr>
                   </thead>
                   <tbody>
-                    {watchlistCandidates.map((item: any, i: number) => (
+                    {pagedWatchlist.map((item: any, i: number) => (
                       <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/10">
                         <td className="px-4 py-3 font-medium">{item.bseCode}</td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">{item.name}</td>
@@ -352,6 +366,37 @@ export default function StrategyFundamental() {
                 </table>
               </div>
             </div>
+            {watchlistTotalPages > 1 && (
+              <div className="flex items-center justify-between mt-3 text-xs sm:text-sm">
+                <span className="text-muted-foreground">
+                  Showing {watchlistPageSafe * WATCHLIST_PAGE_SIZE + 1}–
+                  {Math.min(watchlistCount, (watchlistPageSafe + 1) * WATCHLIST_PAGE_SIZE)} of {watchlistCount}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setWatchlistPage((p) => Math.max(0, p - 1))}
+                    disabled={watchlistPageSafe === 0}
+                    data-testid="button-watchlist-prev"
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-muted-foreground tabular-nums">
+                    Page {watchlistPageSafe + 1} / {watchlistTotalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setWatchlistPage((p) => Math.min(watchlistTotalPages - 1, p + 1))}
+                    disabled={watchlistPageSafe >= watchlistTotalPages - 1}
+                    data-testid="button-watchlist-next"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
