@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Loader2, Radar, TrendingUp, TrendingDown } from "lucide-react";
 
 type BohDetails = {
@@ -97,6 +98,14 @@ export default function StrategyBoh() {
   const [viewMode, setViewMode] = useState<"stocks" | "etfs">("stocks");
   const [isScanningStocks, setIsScanningStocks] = useState(false);
   const [isScanningEtfs, setIsScanningEtfs] = useState(false);
+  const [scanProgress, setScanProgress] = useState<{ percent: number; processed: number; total: number } | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
 
   const strategyName = viewMode === "stocks" ? "boh-filter" : "boh-etf";
   const isScanning = viewMode === "stocks" ? isScanningStocks : isScanningEtfs;
@@ -110,15 +119,39 @@ export default function StrategyBoh() {
   async function handleScan() {
     setIsScanningStocks(true);
     setViewMode("stocks");
+    setScanProgress({ percent: 0, processed: 0, total: 250 });
     try {
-      const response = await apiRequest("POST", "/api/scan/boh-darvas");
-      const result = await response.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/signals", "boh-filter"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/signals", "darvas"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
-      toast({
-        title: "BOH Scan Complete",
-        description: result.message || `Analyzed ${result.bohCount ?? 0} stocks`,
+      // Start the scan — server responds instantly and works in the background.
+      await apiRequest("POST", "/api/scan/boh-darvas");
+
+      await new Promise<void>((resolve, reject) => {
+        if (pollRef.current) clearInterval(pollRef.current);
+        pollRef.current = setInterval(async () => {
+          try {
+            const job = await fetch("/api/scan/status/boh-darvas").then((r) => r.json());
+            setScanProgress({
+              percent: job.percent ?? 0,
+              processed: job.processed ?? 0,
+              total: job.total ?? 250,
+            });
+            if (job.stage === "complete") {
+              if (pollRef.current) clearInterval(pollRef.current);
+              queryClient.invalidateQueries({ queryKey: ["/api/signals", "boh-filter"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/signals", "darvas"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+              toast({
+                title: "BOH Scan Complete",
+                description: job.result?.message || `Analyzed ${job.result?.bohCount ?? 0} stocks`,
+              });
+              resolve();
+            } else if (job.stage === "error") {
+              if (pollRef.current) clearInterval(pollRef.current);
+              reject(new Error(job.message || "Scan failed"));
+            }
+          } catch {
+            // transient polling hiccup — keep trying
+          }
+        }, 2000);
       });
     } catch (error: any) {
       toast({
@@ -128,6 +161,7 @@ export default function StrategyBoh() {
       });
     } finally {
       setIsScanningStocks(false);
+      setScanProgress(null);
     }
   }
 
@@ -250,6 +284,25 @@ export default function StrategyBoh() {
             </Button>
           </div>
         </div>
+
+        {/* Live scan progress (background job) */}
+        {scanProgress && isScanningStocks && (
+          <div className="bg-card border border-border rounded-xl p-4" data-testid="boh-scan-progress">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                Scanning NIFTY LargeMidcap 250…
+              </div>
+              <span className="text-sm font-mono text-muted-foreground">
+                {scanProgress.processed}/{scanProgress.total} ({scanProgress.percent}%)
+              </span>
+            </div>
+            <Progress value={scanProgress.percent} className="h-2" />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Running in the background — safe to wait, this won't time out.
+            </p>
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
           <h2 className="font-semibold text-sm sm:text-base mb-4">Step-by-Step Strategy Execution</h2>

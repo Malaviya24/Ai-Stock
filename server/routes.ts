@@ -46,6 +46,62 @@ type ScanJob = {
 
 const DMA_SCAN_JOB: ScanJob = { total: 0, processed: 0, stage: "idle" };
 
+// Generic registry of named background scan jobs. Any heavy scan can register
+// here and run in the background so the HTTP request returns instantly.
+const SCAN_JOBS: Record<string, ScanJob> = {};
+
+function getScanJob(name: string): ScanJob {
+  if (!SCAN_JOBS[name]) SCAN_JOBS[name] = { total: 0, processed: 0, stage: "idle" };
+  return SCAN_JOBS[name];
+}
+
+/**
+ * Start a named scan in the background. `worker` does the actual work and is
+ * given a `report(processed, total)` callback to update progress; whatever it
+ * returns becomes the job result. Returns `{ started:false }` if one is already
+ * running so we never launch duplicate scans.
+ */
+function startScanJob(
+  name: string,
+  worker: (report: (processed: number, total: number) => void) => Promise<any>,
+): { started: boolean; job: ScanJob } {
+  const job = getScanJob(name);
+  if (job.stage === "running") return { started: false, job };
+
+  job.stage = "running";
+  job.processed = 0;
+  job.total = 0;
+  job.startedAt = new Date().toISOString();
+  job.finishedAt = undefined;
+  job.message = undefined;
+  job.result = undefined;
+
+  (async () => {
+    try {
+      const result = await worker((processed, total) => {
+        job.processed = processed;
+        job.total = total;
+      });
+      job.result = result;
+      job.processed = job.total || job.processed;
+      job.stage = "complete";
+      job.finishedAt = new Date().toISOString();
+    } catch (e: any) {
+      job.stage = "error";
+      job.message = e?.message || "scan failed";
+      job.finishedAt = new Date().toISOString();
+    }
+  })();
+
+  return { started: true, job };
+}
+
+function scanJobStatus(name: string) {
+  const job = SCAN_JOBS[name] || { total: 0, processed: 0, stage: "idle" as const };
+  const percent = job.total > 0 ? +(100 * (job.processed / job.total)).toFixed(1) : 0;
+  return { ...job, percent };
+}
+
 const NIFTY_50_SYMBOLS = [
   "ADANIENT.NS", "ADANIPORTS.NS", "APOLLOHOSP.NS", "ASIANPAINT.NS", "AXISBANK.NS",
   "BAJAJ-AUTO.NS", "BAJFINANCE.NS", "BAJAJFINSV.NS", "BPCL.NS", "BHARTIARTL.NS",
@@ -841,7 +897,12 @@ export async function registerRoutes(
     }
   });
 
-  const performBohScan = async (symbols: string[], strategyName: string, batchSize = 5) => {
+  const performBohScan = async (
+    symbols: string[],
+    strategyName: string,
+    batchSize = 5,
+    onProgress?: (processed: number, total: number) => void,
+  ) => {
     log(`Starting BOH scan for ${symbols.length} symbols with strategy: ${strategyName}`);
     let bohCount = 0;
     // Ensure uniqueness
@@ -1041,25 +1102,26 @@ export async function registerRoutes(
           }
         })
       );
+      onProgress?.(Math.min(uniqueSymbols.length, i + batchSize), uniqueSymbols.length);
     }
     return bohCount;
   };
 
-  app.post("/api/scan/boh-darvas", async (_req, res) => {
-    try {
+  // Generic background-scan status endpoint (used by heavy scans that poll).
+  app.get("/api/scan/status/:name", (req, res) => {
+    res.json(scanJobStatus(req.params.name));
+  });
+
+  app.post("/api/scan/boh-darvas", (_req, res) => {
+    const { started, job } = startScanJob("boh-darvas", async (report) => {
       await storage.clearSignalsByStrategy("boh-filter");
-      // Use slice(0, 250) to strictly limit to 250
       const symbolsToScan = Array.from(new Set(NIFTY_LARGEMIDCAP_250_SYMBOLS)).slice(0, 250);
-      const bohCount = await performBohScan(symbolsToScan, "boh-filter");
-      res.json({
-        success: true,
-        bohCount,
-        message: `BOH: ${bohCount} zones`,
-      });
-    } catch (error: any) {
-      log(`BOH scan error: ${error.message}`);
-      res.status(500).json({ message: "BOH scan failed" });
-    }
+      const bohCount = await performBohScan(symbolsToScan, "boh-filter", 5, report);
+      return { success: true, bohCount, message: `BOH: ${bohCount} zones` };
+    });
+
+    const percent = job.total > 0 ? +(100 * (job.processed / job.total)).toFixed(1) : 0;
+    res.status(202).json({ started, running: true, ...job, percent });
   });
   
   app.post("/api/scan/boh-etf", async (_req, res) => {
