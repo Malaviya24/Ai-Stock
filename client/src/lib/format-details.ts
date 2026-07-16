@@ -6,16 +6,22 @@
  *
  * This function extracts a clean, human-readable summary from either form,
  * so raw JSON like {"currentMonth":"1","candleType":"Bearish",...} never
- * appears in the UI.
+ * appears in the UI. It also repairs common UTF-8 encoding corruptions
+ * (₹ → â‚¹, — → â€", × → Ã—) that occurred when signals were stored to
+ * MongoDB through a misconfigured encoding layer.
  */
 export function formatDetails(details: string | null | undefined): string {
   if (!details) return "";
-  // If it doesn't look like JSON, return as-is (already a readable string).
-  if (!details.startsWith("{") && !details.startsWith("[")) return details;
+
+  // First, repair common encoding corruption patterns.
+  let clean = repairEncoding(details);
+
+  // If it doesn't look like JSON, return the cleaned string as-is.
+  if (!clean.startsWith("{") && !clean.startsWith("[")) return clean;
 
   try {
-    const parsed = JSON.parse(details);
-    if (typeof parsed !== "object" || parsed === null) return details;
+    const parsed = JSON.parse(clean);
+    if (typeof parsed !== "object" || parsed === null) return clean;
 
     // Try to extract common readable fields from various strategy data shapes.
     const parts: string[] = [];
@@ -43,7 +49,35 @@ export function formatDetails(details: string | null | undefined): string {
     const keys = Object.keys(parsed).slice(0, 3).join(", ");
     return `Data: ${keys}…`;
   } catch {
-    // JSON parse failed — return as-is (it's probably a plain string with { in it)
-    return details;
+    // JSON parse failed — return the cleaned string
+    return clean;
   }
+}
+
+/**
+ * Repairs common UTF-8 double/triple encoding corruption patterns that appear
+ * when text containing ₹, —, ×, etc. passes through a Latin-1/Windows-1252
+ * intermediate layer (e.g. MongoDB driver or Node stream misconfiguration).
+ */
+export function repairEncoding(text: string): string {
+  return text
+    // ₹ (U+20B9) corrupted various ways
+    .replace(/â‚¹/g, "₹")
+    .replace(/ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹/g, "₹")
+    .replace(/Ã¢â‚¬Å¡Ã‚Â¹/g, "₹")
+    // — (em dash, U+2014)
+    .replace(/â€"/g, "—")
+    .replace(/Ã¢â‚¬â€/g, "—")
+    .replace(/â€""/g, "—")
+    // × (multiplication sign, U+00D7)
+    .replace(/Ã—/g, "×")
+    // → (right arrow, U+2192)
+    .replace(/â†'/g, "→")
+    // ≥ (U+2265)
+    .replace(/â‰¥/g, "≥")
+    // ≤ (U+2264)
+    .replace(/â‰¤/g, "≤")
+    // Â (stray padding byte from double-encoding)
+    .replace(/Â /g, " ")
+    .replace(/Â¹/g, "¹");
 }

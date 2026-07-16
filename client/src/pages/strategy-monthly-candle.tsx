@@ -24,15 +24,22 @@ function parseMonthlyDetails(details: string) {
   }
 }
 
-/** Extract a clean summary from structured details (never show raw JSON). */
+/** Extract a clean, readable summary from a monthly-candle item. Never
+ *  returns raw JSON — if the item's `details` is a JSON string, we build a
+ *  summary from the already-parsed structured fields (candleType, monthRange,
+ *  riskLevel, status) rather than dumping the raw object. */
 function renderDetails(item: any): string {
-  if (item.candleType && item.monthRange) {
-    return `${item.candleType} Ãƒâ€šÃ‚Â· ${item.monthRange}${item.riskLevel ? ` Ãƒâ€šÃ‚Â· Risk: ${item.riskLevel}` : ""}`;
+  const parts: string[] = [];
+  if (item.candleType) parts.push(item.candleType);
+  if (item.monthRange) parts.push(item.monthRange);
+  if (item.riskLevel) parts.push(`Risk: ${item.riskLevel}`);
+  if (item.status) parts.push(item.status);
+  if (parts.length) return parts.join(" · ");
+  // Don't render a raw JSON string as a fallback.
+  if (typeof item.details === "string" && !item.details.startsWith("{") && !item.details.startsWith("[")) {
+    return item.details;
   }
-  if (item.status) return item.status;
-  // If details is somehow still a raw JSON string, don't render it as-is
-  if (typeof item.details === "string" && item.details.startsWith("{")) return "";
-  return item.details || "";
+  return "";
 }
 
 export default function StrategyMonthlyCandle() {
@@ -90,12 +97,13 @@ export default function StrategyMonthlyCandle() {
 
   // Use scanResult when available, fallback to processedSignals
   const dataSource = scanResult?.all_results ? scanResult.all_results : processedSignals;
-  // Whether the data has rich structured fields (from either a fresh scan or
-  // parsed DB signals). Controls which column layout the table uses. Previously
-  // this was keyed off `scanResult?.all_results` which meant DB signals always
-  // got the "legacy" path that dumped raw JSON ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the root cause of the bug.
+  // Rich vs legacy column layout is driven by whether the *data itself* has
+  // structured fields (from either a fresh scan or parsed DB signals). Was
+  // previously keyed off `scanResult?.all_results` which forced the "legacy"
+  // path for persisted DB signals, causing them to render raw JSON in the
+  // details column.
   const hasRichData = dataSource.length > 0 && dataSource[0]?.currentMonth !== undefined;
-  
+
   const bullishData = dataSource.filter((r: any) => r.signal === "BUY");
   const bearishData = dataSource.filter((r: any) => r.signal === "SELL");
   const noTradeData = dataSource.filter((r: any) => r.signal !== "BUY" && r.signal !== "SELL");
@@ -112,7 +120,7 @@ export default function StrategyMonthlyCandle() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" data-testid="text-strategy-heading">Monthly Candle Trading</h1>
             <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-              Nifty 50 monthly OHLC analysis ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â enter on bullish monthly candles with 3% target, exit on bearish reversals.
+              Nifty 50 monthly OHLC analysis — enter on bullish monthly candles with 3% target, exit on bearish reversals.
             </p>
           </div>
           <Button
@@ -206,7 +214,7 @@ export default function StrategyMonthlyCandle() {
               }`}
             >
               <div className="text-[10px] sm:text-xs uppercase tracking-wider mb-1 opacity-80">Stocks Scanned</div>
-              <div className="text-base sm:text-xl font-bold font-mono" data-testid="text-scanned-count">{totalScanned || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
+              <div className="text-base sm:text-xl font-bold font-mono" data-testid="text-scanned-count">{totalScanned || "—"}</div>
             </button>
 
             <button
@@ -273,8 +281,8 @@ export default function StrategyMonthlyCandle() {
                       {isScanResult ? (
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
-                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
+                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "—"}</span></span>
+                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "—"}</span></span>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
                             <span>Entry: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
@@ -287,7 +295,7 @@ export default function StrategyMonthlyCandle() {
                             <span>Entry: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                             <span>Target: <span className="font-mono text-green-500">₹{Number(item.target).toFixed(2)}</span></span>
                           </div>
-                          {item.details && <div className="text-[10px] text-muted-foreground leading-relaxed">{renderDetails(item)}</div>}
+                          {renderDetails(item) && <div className="text-[10px] text-muted-foreground leading-relaxed">{renderDetails(item)}</div>}
                         </>
                       )}
                     </div>
@@ -321,39 +329,34 @@ export default function StrategyMonthlyCandle() {
                     </tr>
                   </thead>
                   <tbody>
-                    {bullishData.map((item: any, i: number) => {
-                      // Check if we have structured data or legacy string details
-                      const hasStructuredData = item.currentMonth !== undefined;
-                      
-                      return (
-                        <tr key={item.id || i} className="border-b border-border last:border-0">
-                          <td className="px-4 py-3">
-                            <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
-                            <div className="text-xs text-muted-foreground">{item.name || item.companyName}</div>
-                          </td>
-                          {hasStructuredData ? (
-                            <>
-                              <td className="px-4 py-3 text-sm">
-                                <div className="text-[12px] text-foreground">{item.monthRange}</div>
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.open).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.high).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.low).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.close).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.entryPrice || item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-green-500">₹{Number(item.target).toFixed(2)}</td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="px-4 py-3 text-sm" colSpan={8}>
-                                <div className="text-xs text-muted-foreground">Legacy data format. Please run a new scan.</div>
-                              </td>
-                            </>
-                          )}
-                        </tr>
-                      );
-                    })}
+                    {bullishData.map((item: any, i: number) => (
+                      <tr key={item.id || i} className="border-b border-border last:border-0">
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
+                          <div className="text-xs text-muted-foreground">{item.name || item.companyName}</div>
+                        </td>
+                        {hasRichData ? (
+                          <>
+                            <td className="px-4 py-3 text-sm">
+                              <div className="text-[12px] text-foreground">{item.monthRange || item.currentMonth || "—"}</div>
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.open || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.high || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.low || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.close || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.entryPrice || item.price).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right font-mono text-green-500">₹{Number(item.target).toFixed(2)}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right font-mono text-green-500">₹{Number(item.target).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground">{renderDetails(item) || "—"}</td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -383,8 +386,8 @@ export default function StrategyMonthlyCandle() {
                       {isScanResult ? (
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
-                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
+                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "—"}</span></span>
+                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "—"}</span></span>
                           </div>
                           <div className="text-xs text-muted-foreground">
                             Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span>
@@ -395,7 +398,7 @@ export default function StrategyMonthlyCandle() {
                           <div className="text-xs text-muted-foreground">
                             Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span>
                           </div>
-                          {item.details && <div className="text-[10px] text-muted-foreground leading-relaxed">{renderDetails(item)}</div>}
+                          {renderDetails(item) && <div className="text-[10px] text-muted-foreground leading-relaxed">{renderDetails(item)}</div>}
                         </>
                       )}
                     </div>
@@ -424,30 +427,27 @@ export default function StrategyMonthlyCandle() {
                     </tr>
                   </thead>
                   <tbody>
-                    {bearishData.map((item: any, i: number) => {
-                      const isScanResult = !!item.currentMonth;
-                      return (
-                        <tr key={item.id || i} className="border-b border-border last:border-0">
-                          <td className="px-4 py-3">
-                            <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
-                            <div className="text-xs text-muted-foreground">{isScanResult ? item.name : item.companyName}</div>
-                          </td>
-                          {isScanResult ? (
-                            <>
-                              <td className="px-4 py-3 text-sm">{item.currentMonth || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
-                              <td className="px-4 py-3 text-sm">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm">{item.status || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-xs text-muted-foreground">{item.details || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
-                            </>
-                          )}
-                        </tr>
-                      );
-                    })}
+                    {bearishData.map((item: any, i: number) => (
+                      <tr key={item.id || i} className="border-b border-border last:border-0">
+                        <td className="px-4 py-3">
+                          <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
+                          <div className="text-xs text-muted-foreground">{item.name || item.companyName}</div>
+                        </td>
+                        {hasRichData ? (
+                          <>
+                            <td className="px-4 py-3 text-sm">{item.currentMonth || item.monthRange || "—"}</td>
+                            <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-sm">{item.status || "—"}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-xs text-muted-foreground">{renderDetails(item) || "—"}</td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -480,10 +480,10 @@ export default function StrategyMonthlyCandle() {
                           <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
                           <div className="text-xs text-muted-foreground">{item.name || item.companyName}</div>
                         </td>
-                        <td className="px-4 py-3 text-sm">{item.currentMonth || item.monthRange || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
-                        <td className="px-4 py-3 text-sm">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
+                        <td className="px-4 py-3 text-sm">{item.currentMonth || item.monthRange || "—"}</td>
+                        <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
                         <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{item.status || renderDetails(item) || "No signal"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{item.status || item.details || "No signal"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -509,7 +509,7 @@ export default function StrategyMonthlyCandle() {
           <h3 className="font-semibold text-sm sm:text-base mb-2">Risk Management Rules</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {[
-              { icon: Target, color: "text-green-500", text: "Target: Entry Price ÃƒÆ’— 1.03 (3% profit)" },
+              { icon: Target, color: "text-green-500", text: "Target: Entry Price × 1.03 (3% profit)" },
               { icon: Shield, color: "text-red-500", text: "Stop Loss: Monthly Low of the candle" },
             ].map((rule, i) => (
               <div key={i} className="flex items-center gap-2">

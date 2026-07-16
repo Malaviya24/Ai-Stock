@@ -17,9 +17,9 @@ function SignalBadge({ signal }: { signal: string }) {
 
 // Helper to format price values - handles both scanResult and signals format
 function formatPrice(value: any): string {
-  if (value === null || value === undefined) return "â€”";
+  if (value === null || value === undefined) return "—";
   const num = Number(value);
-  return isNaN(num) ? "â€”" : num.toFixed(2);
+  return isNaN(num) ? "—" : num.toFixed(2);
 }
 
 // Helper to determine if data is from scanResult (has dma124) or signals (has details)
@@ -136,16 +136,16 @@ export default function StrategyMoneyTree() {
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>SRTV: <span className="font-mono text-foreground">{Number(item.srtv).toFixed(4)}</span></span>
-                            <span>DMA: <span className="font-mono text-foreground">â‚¹{Number(item.dma124).toFixed(2)}</span></span>
+                            <span>DMA: <span className="font-mono text-foreground">₹{Number(item.dma124).toFixed(2)}</span></span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>CMP: <span className="font-mono text-foreground">â‚¹{Number(item.price).toFixed(2)}</span></span>
+                            <span>CMP: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                             <span>RSI: <span className="font-mono text-foreground">{Number(item.rsi).toFixed(2)}</span></span>
                           </div>
                         </>
                       ) : (
                         <div className="text-xs text-muted-foreground">
-                          <span>Price: <span className="font-mono text-foreground">â‚¹{Number(item.price).toFixed(2)}</span></span>
+                          <span>Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                           {item.details && <p className="mt-1">{formatDetails(item.details)}</p>}
                         </div>
                       )}
@@ -179,15 +179,15 @@ export default function StrategyMoneyTree() {
                           </td>
                           {isScan ? (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.dma124).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.dma124).toFixed(2)}</td>
                               <td className="px-4 py-3 text-right font-mono">{Number(item.srtv).toFixed(4)}</td>
                             </>
                           ) : (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">â€”</td>
-                              <td className="px-4 py-3 text-right font-mono">â€”</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">—</td>
+                              <td className="px-4 py-3 text-right font-mono">—</td>
                             </>
                           )}
                           <td className="px-4 py-3 text-center"><SignalBadge signal={isScan ? "SIP" : (item.signal || "BUY")} /></td>
@@ -224,16 +224,16 @@ export default function StrategyMoneyTree() {
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>SRTV: <span className="font-mono text-foreground">{Number(item.srtv).toFixed(4)}</span></span>
-                            <span>DMA: <span className="font-mono text-foreground">â‚¹{Number(item.dma124).toFixed(2)}</span></span>
+                            <span>DMA: <span className="font-mono text-foreground">₹{Number(item.dma124).toFixed(2)}</span></span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>CMP: <span className="font-mono text-foreground">â‚¹{Number(item.price).toFixed(2)}</span></span>
+                            <span>CMP: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                             <span>RSI: <span className="font-mono text-foreground">{Number(item.rsi).toFixed(2)}</span></span>
                           </div>
                         </>
                       ) : (
                         <div className="text-xs text-muted-foreground">
-                          <span>Price: <span className="font-mono text-foreground">â‚¹{Number(item.price).toFixed(2)}</span></span>
+                          <span>Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                           {item.details && <p className="mt-1">{formatDetails(item.details)}</p>}
                         </div>
                       )}
@@ -267,15 +267,15 @@ export default function StrategyMoneyTree() {
                           </td>
                           {isScan ? (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.dma124).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.dma124).toFixed(2)}</td>
                               <td className="px-4 py-3 text-right font-mono">{Number(item.srtv).toFixed(4)}</td>
                             </>
                           ) : (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">â€”</td>
-                              <td className="px-4 py-3 text-right font-mono">â€”</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">—</td>
+                              <td className="px-4 py-3 text-right font-mono">—</td>
                             </>
                           )}
                           <td className="px-4 py-3 text-center"><SignalBadge signal={isScan ? "PROFIT" : (item.signal || "SELL")} /></td>
@@ -312,16 +312,16 @@ export default function StrategyMoneyTree() {
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>SRTV: <span className="font-mono text-foreground">{Number(item.srtv).toFixed(4)}</span></span>
-                            <span>DMA: <span className="font-mono text-foreground">â‚¹{Number(item.dma124).toFixed(2)}</span></span>
+                            <span>DMA: <span className="font-mono text-foreground">₹{Number(item.dma124).toFixed(2)}</span></span>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>CMP: <span className="font-mono text-foreground">â‚¹{Number(item.price).toFixed(2)}</span></span>
+                            <span>CMP: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                             <span>RSI: <span className="font-mono text-foreground">{Number(item.rsi).toFixed(2)}</span></span>
                           </div>
                         </>
                       ) : (
                         <div className="text-xs text-muted-foreground">
-                          <span>Price: <span className="font-mono text-foreground">â‚¹{Number(item.price).toFixed(2)}</span></span>
+                          <span>Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
                           {item.details && <p className="mt-1">{formatDetails(item.details)}</p>}
                         </div>
                       )}
@@ -355,15 +355,15 @@ export default function StrategyMoneyTree() {
                           </td>
                           {isScan ? (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.dma124).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.dma124).toFixed(2)}</td>
                               <td className="px-4 py-3 text-right font-mono">{Number(item.srtv).toFixed(4)}</td>
                             </>
                           ) : (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">â‚¹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">â€”</td>
-                              <td className="px-4 py-3 text-right font-mono">â€”</td>
+                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">—</td>
+                              <td className="px-4 py-3 text-right font-mono">—</td>
                             </>
                           )}
                           <td className="px-4 py-3 text-center"><SignalBadge signal={isScan ? "NEUTRAL" : (item.signal || "WATCH")} /></td>
