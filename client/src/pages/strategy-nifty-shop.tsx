@@ -65,16 +65,35 @@ export default function StrategyNiftyShop() {
     }
   }
 
-  // Auto-run scan on first load
+  // Only auto-scan on first load if there are no stored signals from a
+  // previous session. This way returning users see their last results instantly
+  // without burning an API scan on every page visit.
   useEffect(() => {
-    if (!scanResult && !isScanning) {
+    if (!scanResult && !isScanning && !isLoadingSignals && !signals?.length) {
       handleScan();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoadingSignals]);
 
   const hasScannedData = scanResult?.all_results?.length > 0;
   let dataSource = hasScannedData ? scanResult.all_results : [];
+  // When the user hasn't clicked "scan" this session but previous scan results
+  // exist in the database (via /api/signals), show those so returning users
+  // see their last results without needing to re-scan.
+  if (!hasScannedData && !isScanning) {
+    // The Nifty Shop signals store individual stock entries; fall back to
+    // the signals query data to reconstruct the results table.
+    const fallbackSignals = signals?.map((s: any) => ({
+      symbol: s.symbol,
+      name: s.companyName || s.symbol,
+      price: s.price,
+      signal: s.signal,
+      rsi: null,
+      strategy: s.strategy,
+      details: s.details,
+    })) || [];
+    if (fallbackSignals.length > 0) dataSource = fallbackSignals;
+  }
   if (universe !== "ALL") {
     dataSource = dataSource.filter((r: any) => r.index === universe);
   }
@@ -257,7 +276,7 @@ export default function StrategyNiftyShop() {
                     </td>
                   </tr>
                 ))}
-                {!hasScannedData && !isLoadingSignals && (
+                {!hasScannedData && !isLoadingSignals && dataSource.length === 0 && (
                   <tr>
                     <td colSpan={5} className="p-12 text-center text-muted-foreground italic">
                       Initialize analysis to generate live strategy signals

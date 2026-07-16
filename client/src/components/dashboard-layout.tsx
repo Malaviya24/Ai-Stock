@@ -20,6 +20,7 @@ import {
   Bell,
   User,
   Sparkles,
+  Bookmark,
   Store,
   Trophy,
   Award,
@@ -36,6 +37,7 @@ const navItems = [
   // Core
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/dashboard/advisor", label: "The AI Analyst", icon: Sparkles },
+  { path: "/dashboard/saved", label: "Saved Picks", icon: Bookmark },
   { path: "/dashboard/scanner", label: "Live Scanner", icon: Search },
   { path: "/dashboard/portfolio", label: "Portfolio", icon: LineChart },
   // Ordered per user request
@@ -70,8 +72,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     .filter((p) => location === p || location.startsWith(p + "/"))
     .sort((a, b) => b.length - a.length)[0];
 
-  const coreItems = navItems.slice(0, 4);
-  const strategyItems = navItems.slice(4);
+  const coreItems = navItems.slice(0, 5);
+  const strategyItems = navItems.slice(5);
 
   return (
     <div className="flex flex-col h-full">

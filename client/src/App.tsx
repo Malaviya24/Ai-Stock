@@ -32,6 +32,7 @@ import StrategyCAR from "@/pages/strategy-car";
 import StrategyDMACar from "@/pages/strategy-dma-car";
 import StrategyHoma from "@/pages/strategy-homa";
 import AdvisorPage from "@/pages/advisor";
+import SavedPage from "@/pages/saved";
 
 // Wraps a page component with RequireAuth so signed-out users are redirected
 // to /sign-in. Applied to every /dashboard/* route below.
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/dashboard/scanner" component={protected_(Scanner)} />
       <Route path="/dashboard/portfolio" component={protected_(Portfolio)} />
       <Route path="/dashboard/advisor" component={protected_(AdvisorPage)} />
+      <Route path="/dashboard/saved" component={protected_(SavedPage)} />
 
       <Route path="/dashboard/gap-up" component={protected_(StrategyGapUp)} />
       {/* Weekly ETF Contrarian (slug = method name) */}

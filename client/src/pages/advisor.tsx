@@ -109,9 +109,22 @@ export default function AdvisorPage() {
         generatedAt: result.generatedAt,
         picks: result.picks,
       });
-      toast({ title: "Saved", description: "Analysis saved to your account." });
-    } catch (error: any) {
-      toast({ title: "Could not save", description: error.message, variant: "destructive" });
+      toast({ title: "Saved", description: "Full analysis saved to your account." });
+    } catch (err: any) {
+      toast({ title: "Could not save", description: err.message, variant: "destructive" });
+    }
+  }
+
+  /** Save a single stock pick (user chooses which ones to keep). */
+  async function savePick(pick: AdvisorPick) {
+    try {
+      await apiRequest("POST", "/api/advisor/saved", {
+        generatedAt: result?.generatedAt || new Date().toISOString(),
+        picks: [pick],
+      });
+      toast({ title: `${pick.symbol.replace(".NS", "")} saved`, description: "Find it in your Saved section." });
+    } catch (err: any) {
+      toast({ title: "Could not save", description: err.message, variant: "destructive" });
     }
   }
 
@@ -221,7 +234,17 @@ export default function AdvisorPage() {
                           <span className="font-mono text-3xl font-bold leading-none text-foreground/15 group-hover:text-[hsl(var(--accent))]">
                             {String(i + 1).padStart(2, "0")}
                           </span>
-                          <ActionBadge action={pick.action} />
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); savePick(pick); }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                              title="Save this stock"
+                              aria-label={`Save ${pick.symbol}`}
+                            >
+                              <Bookmark className="w-4 h-4" />
+                            </button>
+                            <ActionBadge action={pick.action} />
+                          </div>
                         </div>
                         <h3 className="font-serif text-lg font-bold leading-tight">{pick.symbol.replace(".NS", "")}</h3>
                         <p className="font-body text-xs text-neutral-600 group-hover:text-background/75 mb-3 truncate">
