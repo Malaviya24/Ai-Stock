@@ -1,4 +1,5 @@
 
+import dns from "dns";
 import mongoose, { Schema, Document } from "mongoose";
 import {
   type WatchlistItem,
@@ -91,6 +92,15 @@ export class MongoStorage implements IStorage {
       if (!process.env.DATABASE_URL) {
         throw new Error("DATABASE_URL is not defined");
       }
+
+      // mongodb+srv:// connection strings require a DNS SRV record lookup.
+      // Node's default resolver sometimes fails this (ECONNREFUSED/ETIMEOUT)
+      // on networks/ISPs that mishandle SRV queries over UDP — even though the
+      // OS's own resolver (nslookup) succeeds. Pointing Node at public DNS
+      // resolvers that reliably support SRV records fixes it without
+      // requiring the user to change their network or router settings.
+      dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
       await mongoose.connect(process.env.DATABASE_URL);
       log("Connected to MongoDB", "mongo");
     } catch (err: any) {
