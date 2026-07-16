@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npx vite build --outDir dist/public",
-  "outputDirectory": "dist/public",
+  "buildCommand": "npx vite build --outDir ../build --emptyOutDir",
+  "outputDirectory": "build",
   "installCommand": "npm install --include=dev",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
