@@ -1,10 +1,35 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+/**
+ * Extracts a clean, human-readable message from a failed response instead of
+ * throwing the raw response body. The backend consistently returns JSON
+ * shaped like { message: "..." } on errors — previously this function threw
+ * `Error(status + rawBodyText)`, which meant every toast/error surface in the
+ * app showed something like `401: {"message":"Sign in required"}` instead of
+ * just "Sign in required".
+ */
 async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+  if (res.ok) return;
+
+  let message = res.statusText || `Request failed (${res.status})`;
+  try {
+    const text = await res.text();
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        message = parsed?.message || parsed?.error || text;
+      } catch {
+        // Response wasn't JSON — fall back to the raw text if it's short/plain.
+        message = text.length < 200 ? text : message;
+      }
+    }
+  } catch {
+    // Reading the body failed; keep the statusText fallback.
   }
+
+  const error = new Error(message) as Error & { status?: number };
+  error.status = res.status;
+  throw error;
 }
 
 export async function apiRequest(

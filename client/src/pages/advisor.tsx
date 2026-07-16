@@ -53,6 +53,10 @@ export default function AdvisorPage() {
   const [progress, setProgress] = useState<{ percent: number; processed: number; total: number } | null>(null);
   const [result, setResult] = useState<AdvisorResult | null>(null);
   const [selected, setSelected] = useState<AdvisorPick | null>(null);
+  // Persistent inline error (in addition to the toast) so a failed run has a
+  // clear, readable explanation right where the user is looking, not just a
+  // toast that disappears in a few seconds.
+  const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -64,6 +68,7 @@ export default function AdvisorPage() {
   async function runAnalysis() {
     setIsRunning(true);
     setSelected(null);
+    setError(null);
     setProgress({ percent: 0, processed: 0, total: 4 });
     try {
       await apiRequest("POST", "/api/advisor/analyze");
@@ -87,8 +92,10 @@ export default function AdvisorPage() {
           }
         }, 1500);
       });
-    } catch (error: any) {
-      toast({ title: "Analysis failed", description: error.message, variant: "destructive" });
+    } catch (err: any) {
+      const message = err?.message || "Something went wrong. Please try again.";
+      setError(message);
+      toast({ title: "Analysis failed", description: message, variant: "destructive" });
     } finally {
       setIsRunning(false);
       setProgress(null);
@@ -152,12 +159,23 @@ export default function AdvisorPage() {
                   </p>
                 </div>
               )}
-              {!isRunning && result && (
+              {!isRunning && (result || error) && (
                 <Button variant="outline" onClick={runAnalysis} data-testid="button-rerun-analysis">
                   <Sparkles className="w-4 h-4 mr-2" /> Run Again
                 </Button>
               )}
             </div>
+
+            {/* Persistent, readable error banner (in addition to the toast) */}
+            {error && !isRunning && (
+              <div className="border border-[hsl(var(--accent))] bg-[hsl(var(--accent))]/5 p-4 flex items-start gap-3" data-testid="banner-advisor-error">
+                <AlertTriangle className="w-4 h-4 text-[hsl(var(--accent))] shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-sm text-[hsl(var(--accent))] mb-0.5">Analysis failed</div>
+                  <p className="font-body text-sm text-neutral-700">{error}</p>
+                </div>
+              </div>
+            )}
 
             {/* Disclaimer — always visible on this section */}
             <div className="border border-[hsl(var(--accent))] bg-[hsl(var(--accent))]/5 p-4 flex items-start gap-3">

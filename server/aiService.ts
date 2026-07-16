@@ -65,6 +65,28 @@ const RESPONSE_SCHEMA = {
   required: ["picks"],
 };
 
+/**
+ * Extracts a short, human-readable message from a provider's error response
+ * instead of surfacing the raw JSON body (which the frontend would otherwise
+ * show verbatim in a toast/error banner).
+ */
+async function extractProviderError(res: Response, providerName: string): Promise<string> {
+  let detail = `HTTP ${res.status}`;
+  try {
+    const data: any = await res.json();
+    detail = data?.error?.message || data?.message || detail;
+  } catch {
+    // Non-JSON error body — keep the generic HTTP status message.
+  }
+  if (res.status === 429) {
+    return `${providerName} rate limit reached. Please try again in a minute.`;
+  }
+  if (res.status === 401 || res.status === 403) {
+    return `${providerName} rejected the API key. Check AI_API_KEY.`;
+  }
+  return `${providerName} error: ${detail}`;
+}
+
 export interface CandidateInput {
   symbol: string;
   companyName: string;
@@ -109,7 +131,13 @@ export async function generateAdvisorPicks(candidates: CandidateInput[]): Promis
 
 async function callGemini(userPayload: unknown): Promise<AdvisorPick[]> {
   const apiKey = process.env.AI_API_KEY;
-  const model = "gemini-2.0-flash";
+  // "gemini-flash-lite-latest" always resolves to Google's current
+  // free-tier-friendly Flash-Lite model. Pinned model names like
+  // "gemini-2.0-flash" or "gemini-2.5-flash" have repeatedly hit a hard
+  // free-tier quota (limit: 0) or been retired for new users/keys — the
+  // "-latest" alias avoids needing a code change every time Google rotates
+  // which specific model version is actually free-tier enabled.
+  const model = "gemini-flash-lite-latest";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const body = {
@@ -129,13 +157,12 @@ async function callGemini(userPayload: unknown): Promise<AdvisorPick[]> {
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Gemini API error ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(await extractProviderError(res, "Gemini"));
   }
 
   const data: any = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error("Gemini returned no content");
+  if (!text) throw new Error("Gemini returned an empty response. Please try again.");
 
   const parsed = JSON.parse(text);
   return parsed.picks || [];
@@ -160,12 +187,11 @@ async function callGroq(userPayload: unknown): Promise<AdvisorPick[]> {
     }),
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Groq API error ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(await extractProviderError(res, "Groq"));
   }
   const data: any = await res.json();
   const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error("Groq returned no content");
+  if (!text) throw new Error("Groq returned an empty response. Please try again.");
   const parsed = JSON.parse(text);
   return parsed.picks || [];
 }
@@ -189,12 +215,11 @@ async function callOpenAI(userPayload: unknown): Promise<AdvisorPick[]> {
     }),
   });
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`OpenAI API error ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(await extractProviderError(res, "OpenAI"));
   }
   const data: any = await res.json();
   const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error("OpenAI returned no content");
+  if (!text) throw new Error("OpenAI returned an empty response. Please try again.");
   const parsed = JSON.parse(text);
   return parsed.picks || [];
 }

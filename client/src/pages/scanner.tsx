@@ -17,12 +17,15 @@ import {
 } from "@/components/ui/table";
 import { Radar, TrendingUp, TrendingDown, Eye, Search, Loader2 } from "lucide-react";
 
+// Values must match the exact `strategy` strings written by POST /api/scan
+// (server/routes.ts) — this basic scan only ever produces these three, so a
+// tab for any other strategy name (e.g. "darvas") would always be empty and
+// look broken/unresponsive even though the click handler works fine.
 const strategies = [
   { value: "all", label: "All" },
-  { value: "darvas", label: "Darvas" },
-  { value: "rsi-nifty-shop", label: "RSI" },
   { value: "gap-up", label: "Gap Up" },
   { value: "turtle", label: "Turtle" },
+  { value: "rsi-nifty-shop", label: "RSI Shop" },
 ];
 
 interface Signal {
