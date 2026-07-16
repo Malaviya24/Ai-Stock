@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDetails } from "@/lib/format-details";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -66,7 +67,7 @@ export default function StrategyMarking() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-strategy-heading">Relative Valuation Marking</h2>
-            <p className="text-sm text-muted-foreground mt-1">Class 11 — PE + PB + PS + EV/EBITDA Rank-Based Scoring</p>
+            <p className="text-sm text-muted-foreground mt-1">Class 11 â€” PE + PB + PS + EV/EBITDA Rank-Based Scoring</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
@@ -86,20 +87,20 @@ export default function StrategyMarking() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Hash className="w-4 h-4" /><span className="text-xs">Stocks Ranked</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-ranked">{scanResult?.total_scanned ?? signals?.length ?? "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-ranked">{scanResult?.total_scanned ?? signals?.length ?? "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Star className="w-4 h-4 text-yellow-500" /><span className="text-xs">Max Marks</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-max">{n > 0 ? n * 4 : "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-max">{n > 0 ? n * 4 : "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Trophy className="w-4 h-4 text-green-500" /><span className="text-xs">#1 Stock</span></div>
-            <div className="text-lg sm:text-xl font-bold text-green-600" data-testid="stat-top">{bestBuy?.symbol?.replace(".NS", "") ?? dataSource[0]?.symbol?.replace(".NS", "") ?? "—"}</div>
+            <div className="text-lg sm:text-xl font-bold text-green-600" data-testid="stat-top">{bestBuy?.symbol?.replace(".NS", "") ?? dataSource[0]?.symbol?.replace(".NS", "") ?? "â€”"}</div>
             <div className="text-[10px] text-muted-foreground">Best Buy (Most Undervalued)</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><BarChart3 className="w-4 h-4" /><span className="text-xs">#1 Score</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-top-score">{(bestBuy?.totalScore ?? dataSource[0]?.totalScore ?? dataSource[0]?.totalMarks) ?? "—"}{(bestBuy || dataSource[0]) ? `/${(bestBuy?.maxScore ?? dataSource[0]?.maxScore ?? dataSource[0]?.maxMarks)}` : ""}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-top-score">{(bestBuy?.totalScore ?? dataSource[0]?.totalScore ?? dataSource[0]?.totalMarks) ?? "â€”"}{(bestBuy || dataSource[0]) ? `/${(bestBuy?.maxScore ?? dataSource[0]?.maxScore ?? dataSource[0]?.maxMarks)}` : ""}</div>
             <div className="text-[10px] text-muted-foreground">Lowest Rank = Most Expensive</div>
           </div>
         </div>
@@ -109,15 +110,15 @@ export default function StrategyMarking() {
           <h3 className="font-semibold text-sm mb-3">Marking System Logic</h3>
           <div className="bg-muted/50 rounded-lg p-3 text-xs sm:text-sm space-y-2">
             <p>For each valuation ratio (PE, PB, PS, EV/EBITDA):</p>
-            <p className="font-mono">Sort ascending → Lowest ratio = N marks, Highest ratio = 1 mark</p>
+            <p className="font-mono">Sort ascending â†’ Lowest ratio = N marks, Highest ratio = 1 mark</p>
             <p className="font-mono">Total Marks = PE_Marks + PB_Marks + PS_Marks + EV/EBITDA_Marks</p>
-            <p>Maximum possible = N × 4 | <span className="text-green-600 font-semibold">Highest score = Most undervalued (relative)</span></p>
+            <p>Maximum possible = N Ã— 4 | <span className="text-green-600 font-semibold">Highest score = Most undervalued (relative)</span></p>
           </div>
         </div>
 
         <div className="rounded-xl border bg-card p-3 sm:p-4">
           <h3 className="font-semibold text-sm mb-2">Key Concept</h3>
-          <p className="text-xs text-muted-foreground">This is a <span className="font-bold text-foreground">relative valuation</span> system. It does NOT say a stock is cheap historically — it identifies which stocks are cheapest <span className="font-bold text-foreground">relative to peers</span> in the same index. Compare across the same universe only.</p>
+          <p className="text-xs text-muted-foreground">This is a <span className="font-bold text-foreground">relative valuation</span> system. It does NOT say a stock is cheap historically â€” it identifies which stocks are cheapest <span className="font-bold text-foreground">relative to peers</span> in the same index. Compare across the same universe only.</p>
         </div>
 
         {isLoading && !hasScannedData && (
@@ -153,7 +154,7 @@ export default function StrategyMarking() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-xs text-muted-foreground">{item.details}</div>
+                    <div className="text-xs text-muted-foreground">{formatDetails(item.details)}</div>
                   )}
                 </div>
               ))}
@@ -209,9 +210,9 @@ export default function StrategyMarking() {
                       ) : (
                         <>
                           <td className="py-2 pr-3 font-medium">{item.symbol?.replace(".NS", "")}</td>
-                          <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
                           <td className="py-2 pr-3"><Badge variant="outline" className="text-[10px]">{item.signal}</Badge></td>
-                          <td className="py-2 text-muted-foreground">{item.details}</td>
+                          <td className="py-2 text-muted-foreground">{formatDetails(item.details)}</td>
                         </>
                       )}
                     </tr>
@@ -222,7 +223,7 @@ export default function StrategyMarking() {
           </div>
         )}
 
-        <p className="text-[10px] text-muted-foreground text-center">Relative Valuation Marking System — Class 11 Strategy. For educational purposes only.</p>
+        <p className="text-[10px] text-muted-foreground text-center">Relative Valuation Marking System â€” Class 11 Strategy. For educational purposes only.</p>
       </div>
     </DashboardLayout>
   );

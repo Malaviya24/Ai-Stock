@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatDetails } from "@/lib/format-details";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -95,7 +96,7 @@ export default function StrategyLtvi() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-strategy-heading">Long Term Value Index</h2>
-            <p className="text-sm text-muted-foreground mt-1">Class 10 — LTVI = PB + PE + P/NSPS + P/RONW (Lower = Better)</p>
+            <p className="text-sm text-muted-foreground mt-1">Class 10 â€” LTVI = PB + PE + P/NSPS + P/RONW (Lower = Better)</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
@@ -115,8 +116,8 @@ export default function StrategyLtvi() {
         {isScanning && (
           <div className="rounded-xl border bg-card p-3">
             <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-muted-foreground">Fetching live prices…</span>
-              <span>{progress ? `${progress.processed}/${progress.total} (${progress.percent || 0}%)` : "Starting…"}</span>
+              <span className="text-muted-foreground">Fetching live pricesâ€¦</span>
+              <span>{progress ? `${progress.processed}/${progress.total} (${progress.percent || 0}%)` : "Startingâ€¦"}</span>
             </div>
             <div className="w-full h-2 bg-muted rounded">
               <div className="h-2 bg-primary rounded" style={{ width: `${progress?.percent || 0}%` }} />
@@ -127,19 +128,19 @@ export default function StrategyLtvi() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><BarChart3 className="w-4 h-4" /><span className="text-xs">Stocks Analyzed</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-scanned">{scanResult?.total_scanned ?? signals?.length ?? "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-scanned">{scanResult?.total_scanned ?? signals?.length ?? "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Star className="w-4 h-4 text-green-500" /><span className="text-xs">SIP Candidates</span></div>
-            <div className="text-xl sm:text-2xl font-bold text-green-600" data-testid="stat-sip">{scanResult?.sip_candidates ?? "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600" data-testid="stat-sip">{scanResult?.sip_candidates ?? "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Trophy className="w-4 h-4 text-yellow-500" /><span className="text-xs">Best LTVI</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-best">{top10[0]?.ltvi ?? "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-best">{top10[0]?.ltvi ?? "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><ArrowUpDown className="w-4 h-4" /><span className="text-xs">Worst LTVI</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-worst">{dataSource.length > 0 ? dataSource[dataSource.length - 1]?.ltvi : "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-worst">{dataSource.length > 0 ? dataSource[dataSource.length - 1]?.ltvi : "â€”"}</div>
           </div>
         </div>
 
@@ -165,7 +166,7 @@ export default function StrategyLtvi() {
             <Badge variant="outline">RONW &gt; 0</Badge>
             <Badge variant="outline">Revenue &gt; 0</Badge>
             <Badge variant="outline">Sorted: LTVI Ascending</Badge>
-            <Badge variant="outline">Top 10 → SIP Portfolio</Badge>
+            <Badge variant="outline">Top 10 â†’ SIP Portfolio</Badge>
           </div>
         </div>
 
@@ -191,7 +192,7 @@ export default function StrategyLtvi() {
                       <div className="text-xs text-muted-foreground">{item.name}</div>
                       <div className="grid grid-cols-2 gap-1 text-xs">
                         <span>LTVI: <span className="font-bold">{item.ltvi}</span></span>
-                        <span>Price: ₹{item.price?.toLocaleString()}</span>
+                        <span>Price: â‚¹{item.price?.toLocaleString()}</span>
                         <span>P/B: {item.pb}</span>
                         <span>P/E: {item.pe}</span>
                         <span>P/NSPS: {item.pNsps}</span>
@@ -199,7 +200,7 @@ export default function StrategyLtvi() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-xs text-muted-foreground">{item.details}</div>
+                    <div className="text-xs text-muted-foreground">{formatDetails(item.details)}</div>
                   )}
                 </div>
               ))}
@@ -239,8 +240,8 @@ export default function StrategyLtvi() {
                           <td className="py-2 pr-3 font-medium">{(item.symbol || "").replace(".BO", "").replace(".NS", "")}</td>
                           <td className="py-2 pr-3 text-muted-foreground">{item.name}</td>
                           <td className="py-2 pr-3 text-muted-foreground">{item.sector}</td>
-                          <td className="py-2 pr-3">₹{item.marketCap ? (item.marketCap / 10000000).toFixed(0) + " Cr" : "—"}</td>
-                          <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3">â‚¹{item.marketCap ? (item.marketCap / 10000000).toFixed(0) + " Cr" : "â€”"}</td>
+                          <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
                           <td className="py-2 pr-3">{item.pb}</td>
                           <td className="py-2 pr-3">{item.pe}</td>
                           <td className="py-2 pr-3">{item.pNsps}</td>
@@ -250,9 +251,9 @@ export default function StrategyLtvi() {
                       ) : (
                         <>
                           <td className="py-2 pr-3 font-medium">{item.symbol?.replace(".NS", "")}</td>
-                          <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
                           <td className="py-2 pr-3"><Badge variant="outline" className="text-[10px]">{item.signal}</Badge></td>
-                          <td className="py-2 text-muted-foreground">{item.details}</td>
+                          <td className="py-2 text-muted-foreground">{formatDetails(item.details)}</td>
                         </>
                       )}
                     </tr>
@@ -267,12 +268,12 @@ export default function StrategyLtvi() {
           <h3 className="font-semibold text-sm mb-2">Annual Review Rule</h3>
           <div className="text-xs text-muted-foreground space-y-1">
             <p>Every 12 months, recalculate LTVI for the full universe.</p>
-            <p>If stock remains in Top 50 → Continue SIP.</p>
-            <p>If removed from Top 50 → Consider booking profit and rotating capital to better-ranked stocks.</p>
+            <p>If stock remains in Top 50 â†’ Continue SIP.</p>
+            <p>If removed from Top 50 â†’ Consider booking profit and rotating capital to better-ranked stocks.</p>
           </div>
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center">Long Term Value Index — Class 10 Strategy. For educational purposes only.</p>
+        <p className="text-[10px] text-muted-foreground text-center">Long Term Value Index â€” Class 10 Strategy. For educational purposes only.</p>
       </div>
     </DashboardLayout>
   );

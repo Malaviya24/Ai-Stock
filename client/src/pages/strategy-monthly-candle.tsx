@@ -24,6 +24,17 @@ function parseMonthlyDetails(details: string) {
   }
 }
 
+/** Extract a clean summary from structured details (never show raw JSON). */
+function renderDetails(item: any): string {
+  if (item.candleType && item.monthRange) {
+    return `${item.candleType} Ãƒâ€šÃ‚Â· ${item.monthRange}${item.riskLevel ? ` Ãƒâ€šÃ‚Â· Risk: ${item.riskLevel}` : ""}`;
+  }
+  if (item.status) return item.status;
+  // If details is somehow still a raw JSON string, don't render it as-is
+  if (typeof item.details === "string" && item.details.startsWith("{")) return "";
+  return item.details || "";
+}
+
 export default function StrategyMonthlyCandle() {
   const { toast } = useToast();
   const [isScanning, setIsScanning] = useState(false);
@@ -79,6 +90,11 @@ export default function StrategyMonthlyCandle() {
 
   // Use scanResult when available, fallback to processedSignals
   const dataSource = scanResult?.all_results ? scanResult.all_results : processedSignals;
+  // Whether the data has rich structured fields (from either a fresh scan or
+  // parsed DB signals). Controls which column layout the table uses. Previously
+  // this was keyed off `scanResult?.all_results` which meant DB signals always
+  // got the "legacy" path that dumped raw JSON ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â the root cause of the bug.
+  const hasRichData = dataSource.length > 0 && dataSource[0]?.currentMonth !== undefined;
   
   const bullishData = dataSource.filter((r: any) => r.signal === "BUY");
   const bearishData = dataSource.filter((r: any) => r.signal === "SELL");
@@ -96,7 +112,7 @@ export default function StrategyMonthlyCandle() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold" data-testid="text-strategy-heading">Monthly Candle Trading</h1>
             <p className="text-muted-foreground text-xs sm:text-sm mt-1">
-              Nifty 50 monthly OHLC analysis — enter on bullish monthly candles with 3% target, exit on bearish reversals.
+              Nifty 50 monthly OHLC analysis ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â enter on bullish monthly candles with 3% target, exit on bearish reversals.
             </p>
           </div>
           <Button
@@ -190,7 +206,7 @@ export default function StrategyMonthlyCandle() {
               }`}
             >
               <div className="text-[10px] sm:text-xs uppercase tracking-wider mb-1 opacity-80">Stocks Scanned</div>
-              <div className="text-base sm:text-xl font-bold font-mono" data-testid="text-scanned-count">{totalScanned || "—"}</div>
+              <div className="text-base sm:text-xl font-bold font-mono" data-testid="text-scanned-count">{totalScanned || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
             </button>
 
             <button
@@ -257,21 +273,21 @@ export default function StrategyMonthlyCandle() {
                       {isScanResult ? (
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "—"}</span></span>
-                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "—"}</span></span>
+                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
+                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span>Entry: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
-                            <span>Target: <span className="font-mono text-green-500">₹{Number(item.target).toFixed(2)}</span></span>
+                            <span>Entry: <span className="font-mono text-foreground">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</span></span>
+                            <span>Target: <span className="font-mono text-green-500">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.target).toFixed(2)}</span></span>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span>Entry: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span></span>
-                            <span>Target: <span className="font-mono text-green-500">₹{Number(item.target).toFixed(2)}</span></span>
+                            <span>Entry: <span className="font-mono text-foreground">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</span></span>
+                            <span>Target: <span className="font-mono text-green-500">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.target).toFixed(2)}</span></span>
                           </div>
-                          {item.details && <div className="text-[10px] text-muted-foreground leading-relaxed">{item.details}</div>}
+                          {item.details && <div className="text-[10px] text-muted-foreground leading-relaxed">{renderDetails(item)}</div>}
                         </>
                       )}
                     </div>
@@ -284,7 +300,7 @@ export default function StrategyMonthlyCandle() {
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>
-                      {scanResult?.all_results ? (
+                      {hasRichData ? (
                         <>
                           <th className="text-left px-4 py-3 text-muted-foreground font-medium">Month</th>
                           <th className="text-right px-4 py-3 text-muted-foreground font-medium">Open</th>
@@ -297,8 +313,8 @@ export default function StrategyMonthlyCandle() {
                         </>
                       ) : (
                         <>
-                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (₹)</th>
-                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Target (₹)</th>
+                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</th>
+                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Target (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</th>
                           <th className="text-left px-4 py-3 text-muted-foreground font-medium">Details</th>
                         </>
                       )}
@@ -320,13 +336,13 @@ export default function StrategyMonthlyCandle() {
                               <td className="px-4 py-3 text-sm">
                                 <div className="text-[12px] text-foreground">{item.monthRange}</div>
                               </td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.open).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.high).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.low).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.close).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.entryPrice || item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-green-500">₹{Number(item.target).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.open).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.high).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.low).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.close).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-sm">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.entryPrice || item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-right font-mono text-green-500">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.target).toFixed(2)}</td>
                             </>
                           ) : (
                             <>
@@ -367,19 +383,19 @@ export default function StrategyMonthlyCandle() {
                       {isScanResult ? (
                         <>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "—"}</span></span>
-                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "—"}</span></span>
+                            <span>Month: <span className="font-mono text-foreground">{item.currentMonth || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
+                            <span>Type: <span className="font-mono text-foreground">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</span></span>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span>
+                            Price: <span className="font-mono text-foreground">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</span>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="text-xs text-muted-foreground">
-                            Price: <span className="font-mono text-foreground">₹{Number(item.price).toFixed(2)}</span>
+                            Price: <span className="font-mono text-foreground">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</span>
                           </div>
-                          {item.details && <div className="text-[10px] text-muted-foreground leading-relaxed">{item.details}</div>}
+                          {item.details && <div className="text-[10px] text-muted-foreground leading-relaxed">{renderDetails(item)}</div>}
                         </>
                       )}
                     </div>
@@ -392,16 +408,16 @@ export default function StrategyMonthlyCandle() {
                   <thead>
                     <tr className="border-b border-border">
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>
-                      {scanResult?.all_results ? (
+                      {hasRichData ? (
                         <>
                           <th className="text-left px-4 py-3 text-muted-foreground font-medium">Month</th>
                           <th className="text-left px-4 py-3 text-muted-foreground font-medium">Candle Type</th>
-                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (₹)</th>
+                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</th>
                           <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
                         </>
                       ) : (
                         <>
-                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (₹)</th>
+                          <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</th>
                           <th className="text-left px-4 py-3 text-muted-foreground font-medium">Details</th>
                         </>
                       )}
@@ -418,15 +434,15 @@ export default function StrategyMonthlyCandle() {
                           </td>
                           {isScanResult ? (
                             <>
-                              <td className="px-4 py-3 text-sm">{item.currentMonth || "—"}</td>
-                              <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-sm">{item.status || "—"}</td>
+                              <td className="px-4 py-3 text-sm">{item.currentMonth || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
+                              <td className="px-4 py-3 text-sm">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-sm">{item.status || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
                             </>
                           ) : (
                             <>
-                              <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
-                              <td className="px-4 py-3 text-xs text-muted-foreground">{item.details || "—"}</td>
+                              <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</td>
+                              <td className="px-4 py-3 text-xs text-muted-foreground">{item.details || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
                             </>
                           )}
                         </tr>
@@ -453,7 +469,7 @@ export default function StrategyMonthlyCandle() {
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Symbol</th>
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Month</th>
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Candle</th>
-                      <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (₹)</th>
+                      <th className="text-right px-4 py-3 text-muted-foreground font-medium">Price (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹)</th>
                       <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
                     </tr>
                   </thead>
@@ -464,10 +480,10 @@ export default function StrategyMonthlyCandle() {
                           <div className="font-medium">{item.symbol.replace(".NS", "")}</div>
                           <div className="text-xs text-muted-foreground">{item.name || item.companyName}</div>
                         </td>
-                        <td className="px-4 py-3 text-sm">{item.currentMonth || item.monthRange || "—"}</td>
-                        <td className="px-4 py-3 text-sm">{item.candleType || "—"}</td>
-                        <td className="px-4 py-3 text-right font-mono">₹{Number(item.price).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{item.status || item.details || "No signal"}</td>
+                        <td className="px-4 py-3 text-sm">{item.currentMonth || item.monthRange || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
+                        <td className="px-4 py-3 text-sm">{item.candleType || "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</td>
+                        <td className="px-4 py-3 text-right font-mono">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹{Number(item.price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{item.status || renderDetails(item) || "No signal"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -493,7 +509,7 @@ export default function StrategyMonthlyCandle() {
           <h3 className="font-semibold text-sm sm:text-base mb-2">Risk Management Rules</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {[
-              { icon: Target, color: "text-green-500", text: "Target: Entry Price × 1.03 (3% profit)" },
+              { icon: Target, color: "text-green-500", text: "Target: Entry Price ÃƒÆ’Ã¢â‚¬â€ 1.03 (3% profit)" },
               { icon: Shield, color: "text-red-500", text: "Stop Loss: Monthly Low of the candle" },
             ].map((rule, i) => (
               <div key={i} className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDetails } from "@/lib/format-details";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +19,7 @@ import {
 import { Radar, TrendingUp, TrendingDown, Eye, Search, Loader2 } from "lucide-react";
 
 // Values must match the exact `strategy` strings written by POST /api/scan
-// (server/routes.ts) — this basic scan only ever produces these three, so a
+// (server/routes.ts) â€” this basic scan only ever produces these three, so a
 // tab for any other strategy name (e.g. "darvas") would always be empty and
 // look broken/unresponsive even though the click handler works fine.
 const strategies = [
@@ -232,15 +233,15 @@ export default function ScannerPage() {
                       </Badge>
                       <div className="flex gap-3">
                         <span>
-                          Price: <span className="font-mono text-foreground">{signal.price != null ? `₹${Number(signal.price).toLocaleString("en-IN")}` : "—"}</span>
+                          Price: <span className="font-mono text-foreground">{signal.price != null ? `â‚¹${Number(signal.price).toLocaleString("en-IN")}` : "â€”"}</span>
                         </span>
                         <span>
-                          Target: <span className="font-mono text-foreground">{signal.target != null ? `₹${Number(signal.target).toLocaleString("en-IN")}` : "—"}</span>
+                          Target: <span className="font-mono text-foreground">{signal.target != null ? `â‚¹${Number(signal.target).toLocaleString("en-IN")}` : "â€”"}</span>
                         </span>
                       </div>
                     </div>
                     {signal.details && (
-                      <div className="text-[10px] text-muted-foreground truncate">{signal.details}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">{formatDetails(signal.details)}</div>
                     )}
                   </div>
                 ))}
@@ -274,16 +275,16 @@ export default function ScannerPage() {
                           <SignalBadge signal={signal.signal} />
                         </TableCell>
                         <TableCell data-testid={`text-price-${signal.id ?? index}`}>
-                          {signal.price != null ? `₹${Number(signal.price).toLocaleString("en-IN")}` : "—"}
+                          {signal.price != null ? `â‚¹${Number(signal.price).toLocaleString("en-IN")}` : "â€”"}
                         </TableCell>
                         <TableCell data-testid={`text-target-${signal.id ?? index}`}>
-                          {signal.target != null ? `₹${Number(signal.target).toLocaleString("en-IN")}` : "—"}
+                          {signal.target != null ? `â‚¹${Number(signal.target).toLocaleString("en-IN")}` : "â€”"}
                         </TableCell>
                         <TableCell className="max-w-[200px] truncate hidden lg:table-cell" data-testid={`text-details-${signal.id ?? index}`}>
-                          {signal.details || "—"}
+                          {signal.details || "â€”"}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm" data-testid={`text-date-${signal.id ?? index}`}>
-                          {signal.date ? new Date(signal.date).toLocaleDateString() : "—"}
+                          {signal.date ? new Date(signal.date).toLocaleDateString() : "â€”"}
                         </TableCell>
                       </TableRow>
                     ))}

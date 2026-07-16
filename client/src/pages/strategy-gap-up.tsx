@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDetails } from "@/lib/format-details";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -60,7 +61,7 @@ export default function StrategyGapUp() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-strategy-heading">Gap Up Open Strategy</h2>
-            <p className="text-sm text-muted-foreground mt-1">Class 14 — Nifty 100 Gap Scanner + 3PM Confirmation + 6.28% Target</p>
+            <p className="text-sm text-muted-foreground mt-1">Class 14 â€” Nifty 100 Gap Scanner + 3PM Confirmation + 6.28% Target</p>
           </div>
           <Button onClick={handleScan} disabled={isScanning} size="sm" data-testid="button-scan-gap-up">
             {isScanning ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Scanning...</> : <><Rocket className="w-4 h-4 mr-1" />Run Gap Scan</>}
@@ -70,10 +71,10 @@ export default function StrategyGapUp() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><BarChart3 className="w-4 h-4" /><span className="text-xs">Stocks Scanned</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-scanned">{scanResult?.total_scanned ?? signals?.length ?? "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-scanned">{scanResult?.total_scanned ?? signals?.length ?? "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
-            <div className="flex items-center gap-2 text-muted-foreground mb-1"><ArrowUpRight className="w-4 h-4 text-green-500" /><span className="text-xs">Valid Gaps (≥3.14%)</span></div>
+            <div className="flex items-center gap-2 text-muted-foreground mb-1"><ArrowUpRight className="w-4 h-4 text-green-500" /><span className="text-xs">Valid Gaps (â‰¥3.14%)</span></div>
             <div className="text-xl sm:text-2xl font-bold text-green-600" data-testid="stat-valid-gaps">{scanResult?.valid_gaps ?? validGaps.length}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
@@ -91,10 +92,10 @@ export default function StrategyGapUp() {
           <h3 className="font-semibold text-sm mb-3">Strategy Rules</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-muted-foreground">
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-blue-500 shrink-0" /><span>Universe: Nifty 100 stocks only</span></div>
-            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-green-500 shrink-0" /><span>Gap must be ≥ 3.14% above previous close</span></div>
+            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-green-500 shrink-0" /><span>Gap must be â‰¥ 3.14% above previous close</span></div>
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-purple-500 shrink-0" /><span>3PM Confirmation: Price must be above today's open</span></div>
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-orange-500 shrink-0" /><span>Conservative Target: 6.28% | Aggressive: 3.14%</span></div>
-            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-red-500 shrink-0" /><span>No stop loss — hold until target or manual exit</span></div>
+            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-red-500 shrink-0" /><span>No stop loss â€” hold until target or manual exit</span></div>
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-cyan-500 shrink-0" /><span>Average down if another valid gap occurs</span></div>
           </div>
         </div>
@@ -102,7 +103,7 @@ export default function StrategyGapUp() {
         <div className="rounded-xl border bg-card p-3 sm:p-4">
           <h3 className="font-semibold text-sm mb-2">Gap Calculation</h3>
           <div className="bg-muted/50 rounded-lg p-3 font-mono text-xs sm:text-sm text-center">
-            Gap% = ((Today Open − Previous Close) / Previous Close) × 100 <span className="text-green-600 ml-2">≥ 3.14% = Valid</span>
+            Gap% = ((Today Open âˆ’ Previous Close) / Previous Close) Ã— 100 <span className="text-green-600 ml-2">â‰¥ 3.14% = Valid</span>
           </div>
         </div>
 
@@ -125,12 +126,12 @@ export default function StrategyGapUp() {
                   {hasScannedData ? (
                     <div className="grid grid-cols-2 gap-1 text-xs">
                       <span>Gap: <GapBadge gap={item.gapPercent} /></span>
-                      <span>Price: ₹{item.price?.toLocaleString()}</span>
-                      <span>Target: ₹{item.targetConservative}</span>
+                      <span>Price: â‚¹{item.price?.toLocaleString()}</span>
+                      <span>Target: â‚¹{item.targetConservative}</span>
                       <span>Vol: {item.volumeRatio}x</span>
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground">{item.details}</div>
+                    <div className="text-xs text-muted-foreground">{formatDetails(item.details)}</div>
                   )}
                 </div>
               ))}
@@ -163,18 +164,18 @@ export default function StrategyGapUp() {
                       {hasScannedData ? (
                         <>
                           <td className="py-2 pr-3"><GapBadge gap={item.gapPercent} /></td>
-                          <td className="py-2 pr-3">₹{item.previousClose?.toLocaleString()}</td>
-                          <td className="py-2 pr-3">₹{item.todayOpen?.toLocaleString()}</td>
-                          <td className="py-2 pr-3 font-medium">₹{item.price?.toLocaleString()}</td>
-                          <td className="py-2 pr-3 text-green-600">₹{item.targetConservative}</td>
-                          <td className="py-2 pr-3 text-blue-600">₹{item.targetAggressive}</td>
+                          <td className="py-2 pr-3">â‚¹{item.previousClose?.toLocaleString()}</td>
+                          <td className="py-2 pr-3">â‚¹{item.todayOpen?.toLocaleString()}</td>
+                          <td className="py-2 pr-3 font-medium">â‚¹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3 text-green-600">â‚¹{item.targetConservative}</td>
+                          <td className="py-2 pr-3 text-blue-600">â‚¹{item.targetAggressive}</td>
                           <td className="py-2 pr-3">{item.volumeRatio}x</td>
                           <td className="py-2">{item.rsi}</td>
                         </>
                       ) : (
                         <>
-                          <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
-                          <td className="py-2 pr-3 text-muted-foreground">{item.details}</td>
+                          <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3 text-muted-foreground">{formatDetails(item.details)}</td>
                           <td className="py-2"><SignalBadge signal={item.signal} /></td>
                         </>
                       )}
@@ -208,9 +209,9 @@ export default function StrategyGapUp() {
                     <tr key={idx} className={`border-b border-border/50 ${item.isValidGap ? "bg-green-50/20 dark:bg-green-900/5" : ""}`} data-testid={`row-gap-${idx}`}>
                       <td className="py-2 pr-3 font-medium">{item.symbol?.replace(".NS", "")}</td>
                       <td className="py-2 pr-3"><GapBadge gap={item.gapPercent} /></td>
-                      <td className="py-2 pr-3">₹{item.previousClose?.toFixed(2)}</td>
-                      <td className="py-2 pr-3">₹{item.todayOpen?.toFixed(2)}</td>
-                      <td className="py-2 pr-3 font-medium">₹{item.price?.toLocaleString()}</td>
+                      <td className="py-2 pr-3">â‚¹{item.previousClose?.toFixed(2)}</td>
+                      <td className="py-2 pr-3">â‚¹{item.todayOpen?.toFixed(2)}</td>
+                      <td className="py-2 pr-3 font-medium">â‚¹{item.price?.toLocaleString()}</td>
                       <td className="py-2 pr-3">
                         <Badge variant="outline" className={`text-[9px] ${item.isValidGap ? "text-green-600 border-green-500/30" : "text-muted-foreground"}`}>
                           {item.isValidGap ? "Yes" : "No"}
@@ -243,7 +244,7 @@ export default function StrategyGapUp() {
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <h3 className="font-semibold text-sm mb-2 text-red-500">Risks</h3>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li>No stop loss — possible 20-25% drawdown</li>
+              <li>No stop loss â€” possible 20-25% drawdown</li>
               <li>Gap frequency is low in some markets</li>
               <li>Requires capital discipline</li>
               <li>Should combine with volume/RSI filters</li>
@@ -251,7 +252,7 @@ export default function StrategyGapUp() {
           </div>
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center">Gap Up Open Strategy — Class 14. For educational purposes only. Not financial advice.</p>
+        <p className="text-[10px] text-muted-foreground text-center">Gap Up Open Strategy â€” Class 14. For educational purposes only. Not financial advice.</p>
       </div>
     </DashboardLayout>
   );

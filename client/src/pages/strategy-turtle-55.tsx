@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDetails } from "@/lib/format-details";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -82,7 +83,7 @@ export default function StrategyTurtle55() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold" data-testid="text-strategy-heading">Updated Turtle Trading</h2>
-            <p className="text-sm text-muted-foreground mt-1">Class 13 — 55-Day High Breakout + 15-Part Capital + 6.28% Target</p>
+            <p className="text-sm text-muted-foreground mt-1">Class 13 â€” 55-Day High Breakout + 15-Part Capital + 6.28% Target</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-1">
@@ -102,7 +103,7 @@ export default function StrategyTurtle55() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><BarChart3 className="w-4 h-4" /><span className="text-xs">Total Scanned</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-scanned">{scanResult?.total_scanned ?? signals?.length ?? "—"}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-scanned">{scanResult?.total_scanned ?? signals?.length ?? "â€”"}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><ArrowUpRight className="w-4 h-4 text-green-500" /><span className="text-xs">Breakouts</span></div>
@@ -110,7 +111,7 @@ export default function StrategyTurtle55() {
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Target className="w-4 h-4" /><span className="text-xs">Per Order</span></div>
-            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-per-order">₹{scanResult?.per_order?.toLocaleString() ?? Math.round(capitalPerStock / 15).toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold" data-testid="stat-per-order">â‚¹{scanResult?.per_order?.toLocaleString() ?? Math.round(capitalPerStock / 15).toLocaleString()}</div>
           </div>
           <div className="rounded-xl border bg-card p-3 sm:p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1"><Shield className="w-4 h-4" /><span className="text-xs">Max Entries</span></div>
@@ -183,10 +184,10 @@ export default function StrategyTurtle55() {
                       <tr key={i} className="border-b">
                         <td className="py-2 pr-3">{r.buyDate}</td>
                         <td className="py-2 pr-3">{r.sellDate}</td>
-                        <td className="py-2 pr-3">₹{r.avgPrice}</td>
-                        <td className="py-2 pr-3">₹{r.exitPrice}</td>
+                        <td className="py-2 pr-3">â‚¹{r.avgPrice}</td>
+                        <td className="py-2 pr-3">â‚¹{r.exitPrice}</td>
                         <td className="py-2 pr-3">{r.returnPct}%</td>
-                        <td className="py-2 pr-3">₹{r.pnl}</td>
+                        <td className="py-2 pr-3">â‚¹{r.pnl}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -201,10 +202,10 @@ export default function StrategyTurtle55() {
           <h3 className="font-semibold text-sm mb-3">Strategy Rules (Mahesh Method)</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-muted-foreground">
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-blue-500 shrink-0" /><span>Divide capital into 15 equal parts</span></div>
-            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-green-500 shrink-0" /><span>Buy 1 part when Close ≥ 55-Day High</span></div>
+            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-green-500 shrink-0" /><span>Buy 1 part when Close â‰¥ 55-Day High</span></div>
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-purple-500 shrink-0" /><span>Max 15 entries per stock</span></div>
-            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-orange-500 shrink-0" /><span>Target: Average Price × 1.0628 (6.28%)</span></div>
-            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-red-500 shrink-0" /><span>No stop loss — no breakout = no buy</span></div>
+            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-orange-500 shrink-0" /><span>Target: Average Price Ã— 1.0628 (6.28%)</span></div>
+            <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-red-500 shrink-0" /><span>No stop loss â€” no breakout = no buy</span></div>
             <div className="flex items-start gap-2"><Shield className="w-3 h-3 mt-0.5 text-cyan-500 shrink-0" /><span>Sell ALL when target hit, then reset</span></div>
           </div>
         </div>
@@ -215,7 +216,7 @@ export default function StrategyTurtle55() {
             {Array.from({ length: 15 }, (_, i) => (
               <div key={i} className="rounded border p-1.5 sm:p-2 text-center bg-muted/50">
                 <div className="text-[10px] sm:text-xs font-bold">P{i + 1}</div>
-                <div className="text-[8px] sm:text-[10px] text-muted-foreground">₹{Math.round(capitalPerStock / 15).toLocaleString()}</div>
+                <div className="text-[8px] sm:text-[10px] text-muted-foreground">â‚¹{Math.round(capitalPerStock / 15).toLocaleString()}</div>
               </div>
             ))}
           </div>
@@ -242,13 +243,13 @@ export default function StrategyTurtle55() {
                   </div>
                   {hasScannedData ? (
                     <div className="grid grid-cols-2 gap-1 text-xs">
-                      <span>Price: ₹{item.price?.toLocaleString()}</span>
-                      <span>55D High: ₹{item.high55}</span>
-                      <span>Target: ₹{item.targetPrice}</span>
+                      <span>Price: â‚¹{item.price?.toLocaleString()}</span>
+                      <span>55D High: â‚¹{item.high55}</span>
+                      <span>Target: â‚¹{item.targetPrice}</span>
                       <span>Shares/Order: {item.sharesPerOrder}</span>
                     </div>
                   ) : (
-                    <div className="text-xs text-muted-foreground">{item.details}</div>
+                    <div className="text-xs text-muted-foreground">{formatDetails(item.details)}</div>
                   )}
                 </div>
               ))}
@@ -281,9 +282,9 @@ export default function StrategyTurtle55() {
                       {hasScannedData ? (
                         <>
                           <td className="py-2 pr-3"><TypeBadge type={item.type} /></td>
-                          <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
-                          <td className="py-2 pr-3">₹{item.high55}</td>
-                          <td className="py-2 pr-3 text-green-600 font-medium">₹{item.targetPrice}</td>
+                          <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3">â‚¹{item.high55}</td>
+                          <td className="py-2 pr-3 text-green-600 font-medium">â‚¹{item.targetPrice}</td>
                           <td className="py-2 pr-3">{item.sharesPerOrder}</td>
                           <td className="py-2 pr-3">{item.maxShares}</td>
                           <td className="py-2 pr-3">{item.rsi}</td>
@@ -291,8 +292,8 @@ export default function StrategyTurtle55() {
                         </>
                       ) : (
                         <>
-                          <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
-                          <td className="py-2 pr-3 text-muted-foreground">{item.details}</td>
+                          <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
+                          <td className="py-2 pr-3 text-muted-foreground">{formatDetails(item.details)}</td>
                           <td className="py-2"><SignalBadge signal={item.signal} /></td>
                         </>
                       )}
@@ -322,8 +323,8 @@ export default function StrategyTurtle55() {
                   {waiting.slice(0, 20).map((item: any, idx: number) => (
                     <tr key={idx} className="border-b border-border/50" data-testid={`row-waiting-${idx}`}>
                       <td className="py-2 pr-3 font-medium">{item.symbol?.replace(".NS", "")}</td>
-                      <td className="py-2 pr-3">₹{item.price?.toLocaleString()}</td>
-                      <td className="py-2 pr-3 text-muted-foreground">{hasScannedData ? `₹${item.high55}` : item.details}</td>
+                      <td className="py-2 pr-3">â‚¹{item.price?.toLocaleString()}</td>
+                      <td className="py-2 pr-3 text-muted-foreground">{hasScannedData ? `â‚¹${item.high55}` : item.details}</td>
                       {hasScannedData && (
                         <td className="py-2 pr-3 text-muted-foreground">{((item.high55 - item.price) / item.price * 100).toFixed(1)}% away</td>
                       )}
@@ -352,12 +353,12 @@ export default function StrategyTurtle55() {
               <li>No downside protection in sharp crashes</li>
               <li>Dead capital in sideways markets</li>
               <li>Requires ETF liquidity for smooth execution</li>
-              <li>Not classic Turtle — rotation-based system</li>
+              <li>Not classic Turtle â€” rotation-based system</li>
             </ul>
           </div>
         </div>
 
-        <p className="text-[10px] text-muted-foreground text-center">Updated Turtle Trading — Class 13 Strategy. For educational purposes only. Not financial advice.</p>
+        <p className="text-[10px] text-muted-foreground text-center">Updated Turtle Trading â€” Class 13 Strategy. For educational purposes only. Not financial advice.</p>
       </div>
     </DashboardLayout>
   );
