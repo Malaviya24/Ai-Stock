@@ -4,11 +4,32 @@ import App from "./App";
 import { CLERK_ENABLED, CLERK_PUBLISHABLE_KEY } from "@/lib/clerk";
 import "./index.css";
 
+// wouter doesn't expose a navigate() outside of components, so Clerk's
+// routerPush/routerReplace call straight into the History API. wouter
+// monkey-patches history.pushState/replaceState on import (see wouter's
+// use-browser-location.js) to dispatch its own re-render event whenever
+// they're called — by anyone, not just wouter's own navigate(). Since "wouter"
+// is imported by App.tsx before this ever runs, calling the native History
+// API here is enough to make redirects (e.g. after sign-up -> /dashboard)
+// instant and client-side instead of a full page reload.
+function wouterPush(to: string) {
+  window.history.pushState(null, "", to);
+}
+function wouterReplace(to: string) {
+  window.history.replaceState(null, "", to);
+}
+
 // Only wrap in ClerkProvider when a publishable key is configured, so the
 // app keeps working (dashboard open, no login) before Clerk is set up.
 createRoot(document.getElementById("root")!).render(
   CLERK_ENABLED ? (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY!}>
+    <ClerkProvider
+      publishableKey={CLERK_PUBLISHABLE_KEY!}
+      routerPush={wouterPush}
+      routerReplace={wouterReplace}
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
+    >
       <App />
     </ClerkProvider>
   ) : (
