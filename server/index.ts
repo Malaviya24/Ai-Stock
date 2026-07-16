@@ -8,6 +8,20 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
+// CORS: allow the frontend origin (Vercel) to call this backend (Render)
+// in a split deployment. In same-origin mode this is a no-op (no CORS needed).
+const FRONTEND_ORIGIN = process.env.FRONTEND_URL || "";
+if (FRONTEND_ORIGIN) {
+  app.use((_req, res, next) => {
+    res.header("Access-Control-Allow-Origin", FRONTEND_ORIGIN);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS,PATCH");
+    res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    if (_req.method === "OPTIONS") return res.sendStatus(204);
+    next();
+  });
+}
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
@@ -82,7 +96,12 @@ app.use((req, res, next) => {
     });
 
     if (process.env.NODE_ENV === "production") {
-      serveStatic(app);
+      // In split deployment mode (frontend on Vercel), don't serve static
+      // files — Vercel handles that. Only serve them when running as a
+      // single combined deployment on Render (no FRONTEND_URL set).
+      if (!process.env.FRONTEND_URL) {
+        serveStatic(app);
+      }
     } else {
       const { setupVite } = await import("./vite");
       await setupVite(httpServer, app);

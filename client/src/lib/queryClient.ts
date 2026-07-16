@@ -1,4 +1,14 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { API_BASE } from "./api";
+
+/**
+ * Resolve a URL: if it starts with `/api` and we have an API_BASE configured
+ * (split deployment), prefix it with the backend origin. Otherwise keep as-is.
+ */
+function resolveUrl(url: string): string {
+  if (API_BASE && url.startsWith("/api")) return `${API_BASE}${url}`;
+  return url;
+}
 
 /**
  * Extracts a clean, human-readable message from a failed response instead of
@@ -37,7 +47,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const res = await fetch(resolveUrl(url), {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -54,7 +64,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const res = await fetch(resolveUrl(queryKey.join("/") as string), {
       credentials: "include",
     });
 

@@ -2,7 +2,21 @@ import { createRoot } from "react-dom/client";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App";
 import { CLERK_ENABLED, CLERK_PUBLISHABLE_KEY } from "@/lib/clerk";
+import { API_BASE } from "@/lib/api";
 import "./index.css";
+
+// Global fetch interceptor: when a split deployment is configured
+// (VITE_API_URL set), automatically prefix any relative "/api/..." request
+// with the backend origin. This avoids editing every single page's fetch calls.
+if (API_BASE) {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    if (typeof input === "string" && input.startsWith("/api")) {
+      return originalFetch(`${API_BASE}${input}`, init);
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
+}
 
 // wouter doesn't expose a navigate() outside of components, so Clerk's
 // routerPush/routerReplace call straight into the History API. wouter

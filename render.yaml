@@ -68,6 +68,13 @@ services:
         value: gemini
       - key: AI_API_KEY
         sync: false
+      # ---------------------------------------------------------------
+      # Split deployment: set FRONTEND_URL to the Vercel domain so CORS
+      # allows the frontend to call this backend.
+      # e.g. https://ai-stock.vercel.app
+      # ---------------------------------------------------------------
+      - key: FRONTEND_URL
+        sync: false
 
 # ---------------------------------------------------------------------
 # OPTIONAL: free PostgreSQL for persistent watchlist/portfolio/signals.
