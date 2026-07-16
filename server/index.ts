@@ -101,6 +101,14 @@ app.use((req, res, next) => {
       // single combined deployment on Render (no FRONTEND_URL set).
       if (!process.env.FRONTEND_URL) {
         serveStatic(app);
+      } else {
+        // Health-check endpoint for Render's deploy verification. Without
+        // this, the healthCheckPath: "/" in render.yaml gets no response
+        // (since static files aren't served in split mode) and the deploy
+        // times out, killing the service.
+        app.get("/", (_req, res) => {
+          res.json({ status: "ok", mode: "api-only", timestamp: new Date().toISOString() });
+        });
       }
     } else {
       const { setupVite } = await import("./vite");
