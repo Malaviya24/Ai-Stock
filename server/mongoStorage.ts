@@ -17,6 +17,7 @@ import { log } from "./index";
 // Schemas
 const WatchlistSchema = new Schema({
   id: { type: String, default: () => randomUUID() },
+  userId: { type: String, default: "local", index: true },
   symbol: { type: String, required: true },
   name: { type: String, required: true },
   exchange: { type: String, default: "NSE" },
@@ -25,6 +26,7 @@ const WatchlistSchema = new Schema({
 
 const PortfolioSchema = new Schema({
   id: { type: String, default: () => randomUUID() },
+  userId: { type: String, default: "local", index: true },
   symbol: { type: String, required: true },
   name: { type: String, required: true },
   entryPrice: { type: Number, required: true },
@@ -50,6 +52,7 @@ const SignalSchema = new Schema({
 
 const TradeSchema = new Schema({
   id: { type: String, default: () => randomUUID() },
+  userId: { type: String, default: "local", index: true },
   symbol: { type: String, required: true },
   name: { type: String, required: true },
   quantity: { type: Number, required: true },
@@ -84,32 +87,32 @@ export class MongoStorage implements IStorage {
     }
   }
 
-  async getWatchlist(): Promise<WatchlistItem[]> {
-    const items = await WatchlistModel.find().lean();
+  async getWatchlist(userId: string): Promise<WatchlistItem[]> {
+    const items = await WatchlistModel.find({ userId }).lean();
     return items.map(this.mapWatchlist);
   }
 
-  async addToWatchlist(item: InsertWatchlist): Promise<WatchlistItem> {
-    const doc = await WatchlistModel.create(item);
+  async addToWatchlist(userId: string, item: InsertWatchlist): Promise<WatchlistItem> {
+    const doc = await WatchlistModel.create({ ...item, userId });
     return this.mapWatchlist(doc.toObject());
   }
 
-  async removeFromWatchlist(id: string): Promise<void> {
-    await WatchlistModel.deleteOne({ id });
+  async removeFromWatchlist(userId: string, id: string): Promise<void> {
+    await WatchlistModel.deleteOne({ id, userId });
   }
 
-  async getPortfolioPositions(): Promise<PortfolioPosition[]> {
-    const items = await PortfolioModel.find().lean();
+  async getPortfolioPositions(userId: string): Promise<PortfolioPosition[]> {
+    const items = await PortfolioModel.find({ userId }).lean();
     return items.map(this.mapPortfolio);
   }
 
-  async addPortfolioPosition(position: InsertPortfolio): Promise<PortfolioPosition> {
-    const doc = await PortfolioModel.create(position);
+  async addPortfolioPosition(userId: string, position: InsertPortfolio): Promise<PortfolioPosition> {
+    const doc = await PortfolioModel.create({ ...position, userId });
     return this.mapPortfolio(doc.toObject());
   }
 
-  async deletePortfolioPosition(id: string): Promise<void> {
-    await PortfolioModel.deleteOne({ id });
+  async deletePortfolioPosition(userId: string, id: string): Promise<void> {
+    await PortfolioModel.deleteOne({ id, userId });
   }
 
   async getSignals(limit: number = 100, strategy?: string): Promise<Signal[]> {
@@ -146,16 +149,16 @@ export class MongoStorage implements IStorage {
     return doc ? this.mapSignal(doc) : null;
   }
 
-  async getTrades(limit: number = 50): Promise<Trade[]> {
-    const items = await TradeModel.find()
+  async getTrades(userId: string, limit: number = 50): Promise<Trade[]> {
+    const items = await TradeModel.find({ userId })
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
     return items.map(this.mapTrade);
   }
 
-  async addTrade(trade: InsertTrade): Promise<Trade> {
-    const doc = await TradeModel.create(trade);
+  async addTrade(userId: string, trade: InsertTrade): Promise<Trade> {
+    const doc = await TradeModel.create({ ...trade, userId });
     return this.mapTrade(doc.toObject());
   }
 
@@ -163,6 +166,7 @@ export class MongoStorage implements IStorage {
   private mapWatchlist(doc: any): WatchlistItem {
     return {
       id: doc.id,
+      userId: doc.userId || "local",
       symbol: doc.symbol,
       name: doc.name,
       exchange: doc.exchange,
@@ -173,6 +177,7 @@ export class MongoStorage implements IStorage {
   private mapPortfolio(doc: any): PortfolioPosition {
     return {
       id: doc.id,
+      userId: doc.userId || "local",
       symbol: doc.symbol,
       name: doc.name,
       entryPrice: doc.entryPrice,
@@ -202,6 +207,7 @@ export class MongoStorage implements IStorage {
   private mapTrade(doc: any): Trade {
     return {
       id: doc.id,
+      userId: doc.userId || "local",
       symbol: doc.symbol,
       name: doc.name,
       quantity: doc.quantity,

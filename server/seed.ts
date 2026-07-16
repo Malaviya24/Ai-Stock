@@ -11,14 +11,16 @@ const DEFAULT_WATCHLIST = [
 
 export async function seedDatabase() {
   try {
-    const existing = await storage.getWatchlist();
+    // Seed under the "local" pseudo-user (used when Clerk is disabled, and
+    // as a sensible default watchlist for demo purposes either way).
+    const existing = await storage.getWatchlist("local");
     if (existing.length > 0) {
       log("Watchlist already has items, skipping seed", "seed");
       return;
     }
 
     for (const item of DEFAULT_WATCHLIST) {
-      await storage.addToWatchlist(item);
+      await storage.addToWatchlist("local", item);
     }
 
     log(`Seeded watchlist with ${DEFAULT_WATCHLIST.length} stocks`, "seed");

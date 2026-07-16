@@ -28,6 +28,8 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserButton, useUser } from "@clerk/clerk-react";
+import { CLERK_ENABLED } from "@/lib/clerk";
 
 const navItems = [
   // Core
@@ -167,6 +169,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     month: "long",
     day: "numeric",
   });
+  // useUser() only works inside a ClerkProvider — safe to call unconditionally
+  // because CLERK_ENABLED gates whether main.tsx mounts that provider, and
+  // this hook is a no-op-safe placeholder otherwise (guarded below).
+  const editorName = CLERK_ENABLED ? useUser().user?.firstName : null;
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -232,7 +238,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Menu className="w-5 h-5" />
             </Button>
             <div className="min-w-0">
-              <div className="hidden sm:block news-label">Today&rsquo;s Edition &middot; {editionDate}</div>
+              <div className="hidden sm:block news-label">
+                Today&rsquo;s Edition &middot; {editionDate}
+                {editorName && <> &middot; Editor: {editorName}</>}
+              </div>
               <h1 className="font-serif text-lg sm:text-2xl font-bold leading-tight truncate" data-testid="text-page-title">
                 {pageTitle}
               </h1>
@@ -245,9 +254,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Button variant="ghost" size="icon" data-testid="button-notifications" className="h-9 w-9" aria-label="Notifications">
               <Bell className="w-4 h-4" strokeWidth={1.5} />
             </Button>
-            <Button variant="ghost" size="icon" data-testid="button-user" className="h-9 w-9" aria-label="Account">
-              <User className="w-4 h-4" strokeWidth={1.5} />
-            </Button>
+            {CLERK_ENABLED ? (
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "h-8 w-8 border border-foreground",
+                    userButtonPopoverCard: "border border-foreground shadow-none rounded-none",
+                  },
+                }}
+              />
+            ) : (
+              <Button variant="ghost" size="icon" data-testid="button-user" className="h-9 w-9" aria-label="Account">
+                <User className="w-4 h-4" strokeWidth={1.5} />
+              </Button>
+            )}
           </div>
         </header>
 

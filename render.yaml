@@ -48,6 +48,26 @@ services:
       # ---------------------------------------------------------------
       - key: DATABASE_URL
         sync: false
+      # ---------------------------------------------------------------
+      # Optional Clerk auth (https://clerk.com). Leave unset to run the
+      # dashboard open (no login). VITE_CLERK_PUBLISHABLE_KEY is also read
+      # at build time by Vite, so set it in Render's dashboard before
+      # deploying if you want login enabled.
+      # ---------------------------------------------------------------
+      - key: VITE_CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SIGNING_SECRET
+        sync: false
+      # ---------------------------------------------------------------
+      # Optional AI Analyst (Google Gemini free tier by default). Leave
+      # unset to disable the AI Analyst section.
+      # ---------------------------------------------------------------
+      - key: AI_PROVIDER
+        value: gemini
+      - key: AI_API_KEY
+        sync: false
 
 # ---------------------------------------------------------------------
 # OPTIONAL: free PostgreSQL for persistent watchlist/portfolio/signals.

@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import pg from "pg";
 import { randomUUID } from "crypto";
 import { MongoStorage } from "./mongoStorage"; // Import MongoStorage
@@ -39,46 +39,49 @@ if (!isMongo && process.env.DATABASE_URL) {
 export { db };
 
 export interface IStorage {
-  getWatchlist(): Promise<WatchlistItem[]>;
-  addToWatchlist(item: InsertWatchlist): Promise<WatchlistItem>;
-  removeFromWatchlist(id: string): Promise<void>;
-  getPortfolioPositions(): Promise<PortfolioPosition[]>;
-  addPortfolioPosition(position: InsertPortfolio): Promise<PortfolioPosition>;
-  deletePortfolioPosition(id: string): Promise<void>;
+  // Watchlist/portfolio/trades are scoped per-user (Clerk userId, or "local"
+  // when auth isn't configured) so one signed-in user never sees another's data.
+  getWatchlist(userId: string): Promise<WatchlistItem[]>;
+  addToWatchlist(userId: string, item: InsertWatchlist): Promise<WatchlistItem>;
+  removeFromWatchlist(userId: string, id: string): Promise<void>;
+  getPortfolioPositions(userId: string): Promise<PortfolioPosition[]>;
+  addPortfolioPosition(userId: string, position: InsertPortfolio): Promise<PortfolioPosition>;
+  deletePortfolioPosition(userId: string, id: string): Promise<void>;
+  // Signals are market-wide scan results, not user-owned, so they stay global.
   getSignals(limit?: number, strategy?: string): Promise<Signal[]>;
   addSignal(signal: InsertSignal): Promise<Signal>;
   clearSignals(): Promise<void>;
   clearSignalsByStrategy(strategy: string): Promise<void>;
   getLastBuySignal(symbol: string, strategy: string): Promise<Signal | null>;
-  getTrades(limit?: number): Promise<Trade[]>;
-  addTrade(trade: InsertTrade): Promise<Trade>;
+  getTrades(userId: string, limit?: number): Promise<Trade[]>;
+  addTrade(userId: string, trade: InsertTrade): Promise<Trade>;
 }
 
 export class DatabaseStorage implements IStorage {
-  async getWatchlist(): Promise<WatchlistItem[]> {
-    return db.select().from(watchlistItems);
+  async getWatchlist(userId: string): Promise<WatchlistItem[]> {
+    return db.select().from(watchlistItems).where(eq(watchlistItems.userId, userId));
   }
 
-  async addToWatchlist(item: InsertWatchlist): Promise<WatchlistItem> {
-    const [result] = await db.insert(watchlistItems).values(item).returning();
+  async addToWatchlist(userId: string, item: InsertWatchlist): Promise<WatchlistItem> {
+    const [result] = await db.insert(watchlistItems).values({ ...item, userId }).returning();
     return result;
   }
 
-  async removeFromWatchlist(id: string): Promise<void> {
-    await db.delete(watchlistItems).where(eq(watchlistItems.id, id));
+  async removeFromWatchlist(userId: string, id: string): Promise<void> {
+    await db.delete(watchlistItems).where(and(eq(watchlistItems.id, id), eq(watchlistItems.userId, userId)));
   }
 
-  async getPortfolioPositions(): Promise<PortfolioPosition[]> {
-    return db.select().from(portfolioPositions);
+  async getPortfolioPositions(userId: string): Promise<PortfolioPosition[]> {
+    return db.select().from(portfolioPositions).where(eq(portfolioPositions.userId, userId));
   }
 
-  async addPortfolioPosition(position: InsertPortfolio): Promise<PortfolioPosition> {
-    const [result] = await db.insert(portfolioPositions).values(position).returning();
+  async addPortfolioPosition(userId: string, position: InsertPortfolio): Promise<PortfolioPosition> {
+    const [result] = await db.insert(portfolioPositions).values({ ...position, userId }).returning();
     return result;
   }
 
-  async deletePortfolioPosition(id: string): Promise<void> {
-    await db.delete(portfolioPositions).where(eq(portfolioPositions.id, id));
+  async deletePortfolioPosition(userId: string, id: string): Promise<void> {
+    await db.delete(portfolioPositions).where(and(eq(portfolioPositions.id, id), eq(portfolioPositions.userId, userId)));
   }
 
   async getSignals(limit: number = 100, strategy?: string): Promise<Signal[]> {
@@ -114,29 +117,32 @@ export class DatabaseStorage implements IStorage {
     return match || null;
   }
 
-  async getTrades(limit: number = 50): Promise<Trade[]> {
-    return db.select().from(trades).orderBy(desc(trades.createdAt)).limit(limit);
+  async getTrades(userId: string, limit: number = 50): Promise<Trade[]> {
+    return db.select().from(trades).where(eq(trades.userId, userId)).orderBy(desc(trades.createdAt)).limit(limit);
   }
 
-  async addTrade(trade: InsertTrade): Promise<Trade> {
-    const [result] = await db.insert(trades).values(trade).returning();
+  async addTrade(userId: string, trade: InsertTrade): Promise<Trade> {
+    const [result] = await db.insert(trades).values({ ...trade, userId }).returning();
     return result;
   }
 }
 
 class MemoryStorage implements IStorage {
-  _watchlist: WatchlistItem[] = [];
-  _portfolio: PortfolioPosition[] = [];
+  // userId stored alongside each record (not part of the public type) so we
+  // can filter per-user without changing the shape returned to callers.
+  _watchlist: (WatchlistItem & { userId: string })[] = [];
+  _portfolio: (PortfolioPosition & { userId: string })[] = [];
   _signals: Signal[] = [];
-  _trades: Trade[] = [];
+  _trades: (Trade & { userId: string })[] = [];
 
-  async getWatchlist(): Promise<WatchlistItem[]> {
-    return [...this._watchlist];
+  async getWatchlist(userId: string): Promise<WatchlistItem[]> {
+    return this._watchlist.filter((w) => w.userId === userId);
   }
 
-  async addToWatchlist(item: InsertWatchlist): Promise<WatchlistItem> {
-    const record: WatchlistItem = {
+  async addToWatchlist(userId: string, item: InsertWatchlist): Promise<WatchlistItem> {
+    const record: WatchlistItem & { userId: string } = {
       id: randomUUID(),
+      userId,
       addedAt: new Date(),
       exchange: item.exchange ?? "NSE",
       name: item.name,
@@ -146,17 +152,18 @@ class MemoryStorage implements IStorage {
     return record;
   }
 
-  async removeFromWatchlist(id: string): Promise<void> {
-    this._watchlist = this._watchlist.filter((w) => w.id !== id);
+  async removeFromWatchlist(userId: string, id: string): Promise<void> {
+    this._watchlist = this._watchlist.filter((w) => !(w.id === id && w.userId === userId));
   }
 
-  async getPortfolioPositions(): Promise<PortfolioPosition[]> {
-    return [...this._portfolio];
+  async getPortfolioPositions(userId: string): Promise<PortfolioPosition[]> {
+    return this._portfolio.filter((p) => p.userId === userId);
   }
 
-  async addPortfolioPosition(position: InsertPortfolio): Promise<PortfolioPosition> {
-    const rec: PortfolioPosition = {
+  async addPortfolioPosition(userId: string, position: InsertPortfolio): Promise<PortfolioPosition> {
+    const rec: PortfolioPosition & { userId: string } = {
       id: randomUUID(),
+      userId,
       enteredAt: new Date(),
       isActive: position.isActive ?? true,
       name: position.name,
@@ -171,8 +178,8 @@ class MemoryStorage implements IStorage {
     return rec;
   }
 
-  async deletePortfolioPosition(id: string): Promise<void> {
-    this._portfolio = this._portfolio.filter((p) => p.id !== id);
+  async deletePortfolioPosition(userId: string, id: string): Promise<void> {
+    this._portfolio = this._portfolio.filter((p) => !(p.id === id && p.userId === userId));
   }
 
   async getSignals(limit: number = 100, strategy?: string): Promise<Signal[]> {
@@ -220,15 +227,17 @@ class MemoryStorage implements IStorage {
     return match || null;
   }
 
-  async getTrades(limit: number = 50): Promise<Trade[]> {
-    return [...this._trades]
+  async getTrades(userId: string, limit: number = 50): Promise<Trade[]> {
+    return this._trades
+      .filter((t) => t.userId === userId)
       .sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0))
       .slice(0, limit);
   }
 
-  async addTrade(trade: InsertTrade): Promise<Trade> {
-    const rec: Trade = {
+  async addTrade(userId: string, trade: InsertTrade): Promise<Trade> {
+    const rec: Trade & { userId: string } = {
       id: randomUUID(),
+      userId,
       createdAt: new Date(),
       entryPrice: trade.entryPrice,
       exitPrice: trade.exitPrice ?? null,

@@ -5,6 +5,9 @@ import { z } from "zod";
 
 export const watchlistItems = pgTable("watchlist_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  // Clerk user id. Defaults to "local" so rows created before auth was added
+  // (or while Clerk is unconfigured) remain visible in single-user mode.
+  userId: text("user_id").notNull().default("local"),
   symbol: text("symbol").notNull(),
   name: text("name").notNull(),
   exchange: text("exchange").notNull().default("NSE"),
@@ -13,6 +16,7 @@ export const watchlistItems = pgTable("watchlist_items", {
 
 export const portfolioPositions = pgTable("portfolio_positions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull().default("local"),
   symbol: text("symbol").notNull(),
   name: text("name").notNull(),
   entryPrice: real("entry_price").notNull(),
@@ -38,6 +42,7 @@ export const signals = pgTable("signals", {
 
 export const trades = pgTable("trades", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull().default("local"),
   symbol: text("symbol").notNull(),
   name: text("name").notNull(),
   quantity: integer("quantity").notNull(),
@@ -94,10 +99,12 @@ export type CompoundingTrade = typeof compoundingTrades.$inferSelect;
 export type InsertCapitalSlot = z.infer<typeof insertCapitalSlotSchema>;
 export type CapitalSlot = typeof capitalSlots.$inferSelect;
 
-export const insertWatchlistSchema = createInsertSchema(watchlistItems).omit({ id: true, addedAt: true });
-export const insertPortfolioSchema = createInsertSchema(portfolioPositions).omit({ id: true, enteredAt: true });
+// userId is set server-side from the authenticated request, never from client
+// input, so it's omitted here alongside the other server-generated fields.
+export const insertWatchlistSchema = createInsertSchema(watchlistItems).omit({ id: true, userId: true, addedAt: true });
+export const insertPortfolioSchema = createInsertSchema(portfolioPositions).omit({ id: true, userId: true, enteredAt: true });
 export const insertSignalSchema = createInsertSchema(signals).omit({ id: true, createdAt: true });
-export const insertTradeSchema = createInsertSchema(trades).omit({ id: true, createdAt: true });
+export const insertTradeSchema = createInsertSchema(trades).omit({ id: true, userId: true, createdAt: true });
 
 export type InsertWatchlist = z.infer<typeof insertWatchlistSchema>;
 export type WatchlistItem = typeof watchlistItems.$inferSelect;

@@ -1,4 +1,6 @@
 import { useLocation } from "wouter";
+import { useUser } from "@clerk/clerk-react";
+import { CLERK_ENABLED } from "@/lib/clerk";
 import logoImg from "@assets/final_logo_ai-stock_1771924785367.png";
 import {
   BarChart2,
@@ -85,6 +87,12 @@ const checklist = [
 export default function Landing() {
   const [, navigate] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // useUser() needs a ClerkProvider; only call it when Clerk is configured.
+  const { isSignedIn } = CLERK_ENABLED ? useUser() : { isSignedIn: true };
+
+  // Signed-in (or auth disabled) -> straight to the dashboard.
+  // Signed-out with auth enabled -> sign up first.
+  const goToDashboard = () => navigate(isSignedIn ? "/dashboard" : "/sign-up");
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -98,7 +106,7 @@ export default function Landing() {
           </div>
           <div className="hidden sm:flex items-center gap-2">
             <span className="news-label mr-3">Vol. 1 &middot; Est. MMXXVI</span>
-            <Button onClick={() => navigate("/dashboard")} data-testid="button-get-started-nav" size="sm">
+            <Button onClick={goToDashboard} data-testid="button-get-started-nav" size="sm">
               Read Inside <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
@@ -115,7 +123,7 @@ export default function Landing() {
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-border bg-background px-4 py-3">
             <Button
-              onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }}
+              onClick={() => { goToDashboard(); setMobileMenuOpen(false); }}
               className="w-full"
               data-testid="button-get-started-mobile"
             >
@@ -147,7 +155,7 @@ export default function Landing() {
               Real-time scanning, AI scoring, and capital allocation for NIFTY 100 stocks &mdash; from RSI ladders to Darvas Box breakouts, every edge in one edition.
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
-              <Button size="lg" onClick={() => navigate("/dashboard")} data-testid="button-open-dashboard">
+              <Button size="lg" onClick={goToDashboard} data-testid="button-open-dashboard">
                 Open Dashboard <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate("/dashboard/scanner")} data-testid="button-try-scanner">
@@ -274,7 +282,7 @@ export default function Landing() {
           <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 px-2">
             Access all strategies, real-time signals, and portfolio management tools.
           </p>
-          <Button size="lg" onClick={() => navigate("/dashboard")} data-testid="button-cta-bottom" className="text-sm sm:text-base">
+          <Button size="lg" onClick={goToDashboard} data-testid="button-cta-bottom" className="text-sm sm:text-base">
             Open Dashboard <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>

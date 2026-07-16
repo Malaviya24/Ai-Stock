@@ -20,6 +20,13 @@ import {
   analyzeExpiryCandle,
 } from "./indicators";
 import { log } from "./index";
+import { requireAuth, getUserId, CLERK_ENABLED } from "./authService";
+
+// Pseudo-user for strategy engines' own internal position tracking (e.g. Nifty
+// Shop / Homa Genius scans reading "currently open lots" as part of their
+// calculation). This is shared simulation state, not personal user data, so
+// it intentionally does not vary per signed-in user.
+const SYSTEM_USER_ID = "system";
 
 // Progress trackers (in-memory)
 let LTVI_PROGRESS: {
@@ -425,6 +432,36 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // Clerk webhook: keeps a minimal local record in sync with user lifecycle
+  // events. Optional — only active when CLERK_WEBHOOK_SIGNING_SECRET is set.
+  // Verifies the Svix signature using the raw request body (captured by the
+  // express.json verify() hook in server/index.ts) before trusting the payload.
+  app.post("/api/webhooks/clerk", async (req, res) => {
+    const signingSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
+    if (!signingSecret) {
+      return res.status(404).json({ message: "Webhook not configured" });
+    }
+    try {
+      const { Webhook } = await import("svix");
+      const wh = new Webhook(signingSecret);
+      const payload = wh.verify(req.rawBody as Buffer, {
+        "svix-id": req.headers["svix-id"] as string,
+        "svix-timestamp": req.headers["svix-timestamp"] as string,
+        "svix-signature": req.headers["svix-signature"] as string,
+      }) as any;
+
+      if (payload.type === "user.created" || payload.type === "user.updated") {
+        log(`[clerk] Synced user ${payload.data?.id}`, "auth");
+      } else if (payload.type === "user.deleted") {
+        log(`[clerk] User deleted ${payload.data?.id}`, "auth");
+      }
+      res.json({ received: true });
+    } catch (error: any) {
+      log(`Clerk webhook verification failed: ${error.message}`, "auth");
+      res.status(400).json({ message: "Invalid webhook signature" });
+    }
+  });
+
   // Add this status endpoint at the top to ensure it's not blocked by other routes
   app.get("/api/status/data-source", (_req, res) => {
     res.json({
@@ -433,9 +470,9 @@ export async function registerRoutes(
     });
   });
 
-  app.get("/api/watchlist", async (_req, res) => {
+  app.get("/api/watchlist", requireAuth, async (req, res) => {
     try {
-      const items = await storage.getWatchlist();
+      const items = await storage.getWatchlist(getUserId(req));
       res.json(items);
     } catch (error: any) {
       log(`Error getting watchlist: ${error.message}`);
@@ -443,14 +480,15 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/watchlist", async (req, res) => {
+  app.post("/api/watchlist", requireAuth, async (req, res) => {
     try {
+      const userId = getUserId(req);
       const parsed = insertWatchlistSchema.parse(req.body);
-      const existing = await storage.getWatchlist();
+      const existing = await storage.getWatchlist(userId);
       if (existing.find((item) => item.symbol === parsed.symbol)) {
         return res.status(400).json({ message: "Symbol already in watchlist" });
       }
-      const item = await storage.addToWatchlist(parsed);
+      const item = await storage.addToWatchlist(userId, parsed);
       res.json(item);
     } catch (error: any) {
       log(`Error adding to watchlist: ${error.message}`);
@@ -458,9 +496,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/watchlist/:id", async (req, res) => {
+  app.delete("/api/watchlist/:id", requireAuth, async (req, res) => {
     try {
-      await storage.removeFromWatchlist(req.params.id);
+      await storage.removeFromWatchlist(getUserId(req), req.params.id as string);
       res.json({ success: true });
     } catch (error: any) {
       log(`Error removing from watchlist: ${error.message}`);
@@ -519,9 +557,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/scores", async (_req, res) => {
+  app.get("/api/scores", requireAuth, async (req, res) => {
     try {
-      const watchlist = await storage.getWatchlist();
+      const watchlist = await storage.getWatchlist(getUserId(req));
       if (watchlist.length === 0) {
         return res.json([]);
       }
@@ -575,14 +613,14 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/capital/:totalCapital", async (req, res) => {
+  app.get("/api/capital/:totalCapital", requireAuth, async (req, res) => {
     try {
-      const totalCapital = parseFloat(req.params.totalCapital);
+      const totalCapital = parseFloat(req.params.totalCapital as string);
       if (isNaN(totalCapital) || totalCapital <= 0) {
         return res.status(400).json({ message: "Invalid capital amount" });
       }
 
-      const positions = await storage.getPortfolioPositions();
+      const positions = await storage.getPortfolioPositions(getUserId(req));
       const currentExposure = positions
         .filter((p) => p.isActive)
         .reduce((sum, p) => sum + p.entryPrice * p.quantity, 0);
@@ -2191,8 +2229,9 @@ export async function registerRoutes(
       const initialTradeSize = totalCapital / 40;
       const results: any[] = [];
 
-      // Get current portfolio for Nifty Shop
-      const openPositions = await storage.getPortfolioPositions();
+      // Get current portfolio for Nifty Shop (shared strategy-engine state,
+      // not a specific user's personal holdings — see SYSTEM_USER_ID above).
+      const openPositions = await storage.getPortfolioPositions(SYSTEM_USER_ID);
       const shopPositions = openPositions.filter(p => p.isActive && p.strategyUsed === "nifty-shop");
 
       const batchSize = 5;
@@ -3131,9 +3170,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/portfolio", async (_req, res) => {
+  app.get("/api/portfolio", requireAuth, async (req, res) => {
     try {
-      const positions = await storage.getPortfolioPositions();
+      const positions = await storage.getPortfolioPositions(getUserId(req));
       res.json(positions);
     } catch (error: any) {
       log(`Error getting portfolio: ${error.message}`);
@@ -3141,12 +3180,13 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/portfolio", async (req, res) => {
+  app.post("/api/portfolio", requireAuth, async (req, res) => {
     try {
+      const userId = getUserId(req);
       const parsed = insertPortfolioSchema.parse(req.body);
-      const position = await storage.addPortfolioPosition(parsed);
+      const position = await storage.addPortfolioPosition(userId, parsed);
 
-      await storage.addTrade({
+      await storage.addTrade(userId, {
         symbol: parsed.symbol,
         name: parsed.name,
         quantity: parsed.quantity,
@@ -3164,9 +3204,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/portfolio/:id", async (req, res) => {
+  app.delete("/api/portfolio/:id", requireAuth, async (req, res) => {
     try {
-      await storage.deletePortfolioPosition(req.params.id);
+      await storage.deletePortfolioPosition(getUserId(req), req.params.id as string);
       res.json({ success: true });
     } catch (error: any) {
       log(`Error deleting position: ${error.message}`);
@@ -3174,10 +3214,10 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/trades", async (req, res) => {
+  app.get("/api/trades", requireAuth, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
-      const allTrades = await storage.getTrades(limit);
+      const allTrades = await storage.getTrades(getUserId(req), limit);
       res.json(allTrades);
     } catch (error: any) {
       log(`Error getting trades: ${error.message}`);
@@ -3400,10 +3440,11 @@ export async function registerRoutes(
 
       log(`Running Parallel Homa Genius Scan (Weekday: ${currentWeekday})...`);
 
-      const openPositions = await storage.getPortfolioPositions();
+      // Shared strategy-engine state (not a specific user's holdings).
+      const openPositions = await storage.getPortfolioPositions(SYSTEM_USER_ID);
       const homaPositions = openPositions.filter(p => p.isActive && p.strategyUsed === "HOMA_GENIUS");
 
-      const historicalTrades = await storage.getTrades(1000);
+      const historicalTrades = await storage.getTrades(SYSTEM_USER_ID, 1000);
       const totalRealProfitValue = historicalTrades
         .filter(t => t.strategy === "HOMA_GENIUS" && t.type === "SELL")
         .reduce((sum, t) => sum + (t.pnl || 0), 0);
@@ -3619,11 +3660,11 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/stats", async (_req, res) => {
+  app.get("/api/stats", async (req, res) => {
     try {
       const [sigs, watchlist] = await Promise.all([
         storage.getSignals(1000),
-        storage.getWatchlist(),
+        storage.getWatchlist(getUserId(req)),
       ]);
       const buySignals = sigs.filter((s) => s.signal === "BUY").length;
       const sellSignals = sigs.filter((s) => s.signal === "SELL").length;
