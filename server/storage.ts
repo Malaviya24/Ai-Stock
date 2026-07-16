@@ -10,6 +10,7 @@ import {
   trades,
   compoundingTrades,
   capitalSlots,
+  savedAnalyses,
   type WatchlistItem,
   type InsertWatchlist,
   type PortfolioPosition,
@@ -22,6 +23,8 @@ import {
   type InsertCompoundingTrade,
   type CapitalSlot,
   type InsertCapitalSlot,
+  type SavedAnalysis,
+  type InsertSavedAnalysis,
 } from "@shared/schema";
 
 // Only init Postgres if NOT using Mongo
@@ -55,6 +58,10 @@ export interface IStorage {
   getLastBuySignal(symbol: string, strategy: string): Promise<Signal | null>;
   getTrades(userId: string, limit?: number): Promise<Trade[]>;
   addTrade(userId: string, trade: InsertTrade): Promise<Trade>;
+  // AI Analyst: saved shortlists, scoped per user.
+  getSavedAnalyses(userId: string): Promise<SavedAnalysis[]>;
+  saveAnalysis(userId: string, data: InsertSavedAnalysis): Promise<SavedAnalysis>;
+  deleteSavedAnalysis(userId: string, id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -124,6 +131,19 @@ export class DatabaseStorage implements IStorage {
   async addTrade(userId: string, trade: InsertTrade): Promise<Trade> {
     const [result] = await db.insert(trades).values({ ...trade, userId }).returning();
     return result;
+  }
+
+  async getSavedAnalyses(userId: string): Promise<SavedAnalysis[]> {
+    return db.select().from(savedAnalyses).where(eq(savedAnalyses.userId, userId)).orderBy(desc(savedAnalyses.createdAt));
+  }
+
+  async saveAnalysis(userId: string, data: InsertSavedAnalysis): Promise<SavedAnalysis> {
+    const [result] = await db.insert(savedAnalyses).values({ ...data, userId }).returning();
+    return result;
+  }
+
+  async deleteSavedAnalysis(userId: string, id: string): Promise<void> {
+    await db.delete(savedAnalyses).where(and(eq(savedAnalyses.id, id), eq(savedAnalyses.userId, userId)));
   }
 }
 
@@ -250,6 +270,30 @@ class MemoryStorage implements IStorage {
     };
     this._trades.push(rec);
     return rec;
+  }
+
+  _savedAnalyses: (SavedAnalysis & { userId: string })[] = [];
+
+  async getSavedAnalyses(userId: string): Promise<SavedAnalysis[]> {
+    return this._savedAnalyses
+      .filter((a) => a.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
+  }
+
+  async saveAnalysis(userId: string, data: InsertSavedAnalysis): Promise<SavedAnalysis> {
+    const rec: SavedAnalysis & { userId: string } = {
+      id: randomUUID(),
+      userId,
+      createdAt: new Date(),
+      generatedAt: data.generatedAt,
+      picks: data.picks,
+    };
+    this._savedAnalyses.push(rec);
+    return rec;
+  }
+
+  async deleteSavedAnalysis(userId: string, id: string): Promise<void> {
+    this._savedAnalyses = this._savedAnalyses.filter((a) => !(a.id === id && a.userId === userId));
   }
 }
 

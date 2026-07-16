@@ -91,6 +91,18 @@ export const capitalSlots = pgTable("capital_slots", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const savedAnalyses = pgTable("saved_analyses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("user_id").notNull(),
+  generatedAt: timestamp("generated_at").notNull(),
+  picks: text("picks").notNull(), // JSON-serialized AdvisorPick[]
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSavedAnalysisSchema = createInsertSchema(savedAnalyses).omit({ id: true, userId: true, createdAt: true });
+export type InsertSavedAnalysis = z.infer<typeof insertSavedAnalysisSchema>;
+export type SavedAnalysis = typeof savedAnalyses.$inferSelect;
+
 export const insertCompoundingTradeSchema = createInsertSchema(compoundingTrades).omit({ id: true, createdAt: true, closedAt: true });
 export const insertCapitalSlotSchema = createInsertSchema(capitalSlots).omit({ id: true, createdAt: true });
 

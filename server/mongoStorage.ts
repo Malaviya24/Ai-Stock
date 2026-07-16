@@ -9,6 +9,8 @@ import {
   type InsertSignal,
   type Trade,
   type InsertTrade,
+  type SavedAnalysis,
+  type InsertSavedAnalysis,
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { randomUUID } from "crypto";
@@ -64,11 +66,20 @@ const TradeSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const SavedAnalysisSchema = new Schema({
+  id: { type: String, default: () => randomUUID() },
+  userId: { type: String, required: true, index: true },
+  generatedAt: { type: Date, required: true },
+  picks: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
 // Models
 const WatchlistModel = mongoose.model("Watchlist", WatchlistSchema);
 const PortfolioModel = mongoose.model("Portfolio", PortfolioSchema);
 const SignalModel = mongoose.model("Signal", SignalSchema);
 const TradeModel = mongoose.model("Trade", TradeSchema);
+const SavedAnalysisModel = mongoose.model("SavedAnalysis", SavedAnalysisSchema);
 
 export class MongoStorage implements IStorage {
   constructor() {
@@ -160,6 +171,30 @@ export class MongoStorage implements IStorage {
   async addTrade(userId: string, trade: InsertTrade): Promise<Trade> {
     const doc = await TradeModel.create({ ...trade, userId });
     return this.mapTrade(doc.toObject());
+  }
+
+  async getSavedAnalyses(userId: string): Promise<SavedAnalysis[]> {
+    const items = await SavedAnalysisModel.find({ userId }).sort({ createdAt: -1 }).lean();
+    return items.map(this.mapSavedAnalysis);
+  }
+
+  async saveAnalysis(userId: string, data: InsertSavedAnalysis): Promise<SavedAnalysis> {
+    const doc = await SavedAnalysisModel.create({ ...data, userId });
+    return this.mapSavedAnalysis(doc.toObject());
+  }
+
+  async deleteSavedAnalysis(userId: string, id: string): Promise<void> {
+    await SavedAnalysisModel.deleteOne({ id, userId });
+  }
+
+  private mapSavedAnalysis(doc: any): SavedAnalysis {
+    return {
+      id: doc.id,
+      userId: doc.userId,
+      generatedAt: doc.generatedAt,
+      picks: doc.picks,
+      createdAt: doc.createdAt,
+    };
   }
 
   // Mappers to match Shared Schema types

@@ -179,6 +179,33 @@ export default function Landing() {
 
       <div className="news-ornament py-6 text-xl">&#x2727; &#x2727; &#x2727;</div>
 
+      {/* New Here? — AI Analyst callout for beginners */}
+      <section className="px-4">
+        <div className="max-w-screen-xl mx-auto border-4 border-foreground bg-foreground text-background p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 justify-between">
+          <div className="text-center sm:text-left">
+            <div className="news-label text-background/70 mb-2">New Here? Start With The Editor</div>
+            <h2 className="font-serif text-2xl sm:text-3xl font-black leading-tight mb-2">
+              Let the AI Analyst read today&rsquo;s market for you.
+            </h2>
+            <p className="font-body text-sm text-background/80 max-w-md">
+              One click reviews every strategy&rsquo;s signals and explains, in plain language, which
+              stocks look interesting &mdash; and why. No jargon required.
+            </p>
+          </div>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="bg-background text-foreground border-background hover:bg-foreground hover:text-background hover:border-background shrink-0"
+            onClick={() => navigate(isSignedIn ? "/dashboard/advisor" : "/sign-up")}
+            data-testid="button-ai-analyst-cta"
+          >
+            Meet the AI Analyst <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </section>
+
+      <div className="news-ornament py-6 text-xl">&#x2727; &#x2727; &#x2727;</div>
+
       <section className="py-14 sm:py-20 px-4 border-t-4 border-foreground newsprint-texture">
         <div className="max-w-screen-xl mx-auto">
           {/* Section masthead */}

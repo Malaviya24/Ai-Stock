@@ -104,6 +104,17 @@ Yahoo Finance API → Backend Data Processor → Indicator Engine → AI Scoring
 - `/api/signals` query serves as fallback for historical signals (basic fields only: symbol, price, signal, details)
 - Signals table does NOT store rich fields like SRTV, score, RSI levels etc.
 
+## Authentication (Clerk)
+- Sign-up/sign-in via Clerk (`@clerk/clerk-react` + `@clerk/express`). All `/dashboard/*` routes are wrapped in `RequireAuth` and redirect to `/sign-in` when signed out.
+- Env vars: `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET` (optional, for `/api/webhooks/clerk` user sync). Leave all empty to run with the dashboard open (no login) — same pattern as the other optional integrations.
+- User management is entirely via the Clerk dashboard (no local password storage). Watchlist/portfolio/trades/saved AI analyses are scoped per Clerk `userId` (falls back to a shared `"local"` user when Clerk is disabled).
+
+## AI Analyst ("Start Here" for beginners)
+- `/dashboard/advisor` — one click aggregates the latest signals across all strategies, enriches the top candidates with live indicators (RSI, DMA, SRTV), and asks an AI model for a plain-English shortlist with buy zone, target, stop loss, confidence, and a "why" explanation.
+- Provider-agnostic `server/aiService.ts` — set `AI_PROVIDER` to `gemini` (default), `groq`, or `openai`, and `AI_API_KEY` to the matching key. Leave `AI_API_KEY` empty to disable the section (returns 503).
+- Runs as a background job (`POST /api/advisor/analyze` + `GET /api/status/ai-analyst`) so it never blocks the Render gateway.
+- Always educational — every surface shows a disclaimer; never presents personalized financial advice.
+
 ## Recent Changes
 - 2026-02-24: Added 4 new strategies: Nifty Dukaan DMA (Class 15), DMA Compounding (Class 16), Smart CAR (Class 17), DMA+CAR Merged (Class 18)
 - 2026-02-21: Added Updated Turtle Trading (Class 13) — 55-day high breakout, 15-part capital, Nifty 50 + ETFs, 6.28% target
