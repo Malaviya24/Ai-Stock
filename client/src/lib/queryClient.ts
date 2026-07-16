@@ -51,7 +51,9 @@ export async function apiRequest(
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    // In same-origin mode, include cookies. In cross-origin mode, the fetch
+    // interceptor handles auth via Bearer token header instead.
+    credentials: API_BASE ? "omit" : "include",
   });
 
   await throwIfResNotOk(res);
@@ -65,7 +67,7 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const res = await fetch(resolveUrl(queryKey.join("/") as string), {
-      credentials: "include",
+      credentials: API_BASE ? "omit" : "include",
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

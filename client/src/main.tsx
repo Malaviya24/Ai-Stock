@@ -2,17 +2,33 @@ import { createRoot } from "react-dom/client";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App";
 import { CLERK_ENABLED, CLERK_PUBLISHABLE_KEY } from "@/lib/clerk";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, getClerkToken } from "@/lib/api";
+import { ClerkTokenProvider } from "@/components/clerk-token-provider";
 import "./index.css";
 
 // Global fetch interceptor: when a split deployment is configured
 // (VITE_API_URL set), automatically prefix any relative "/api/..." request
 // with the backend origin. This avoids editing every single page's fetch calls.
+// It also attaches the Clerk Bearer token for cross-origin auth.
 if (API_BASE) {
   const originalFetch = window.fetch.bind(window);
-  window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+  window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     if (typeof input === "string" && input.startsWith("/api")) {
-      return originalFetch(`${API_BASE}${input}`, init);
+      const url = `${API_BASE}${input}`;
+      const headers = new Headers(init?.headers);
+
+      // Attach Clerk session token for cross-origin auth (cookies don't
+      // travel between Vercel and Render domains).
+      if (CLERK_ENABLED && getClerkToken) {
+        try {
+          const token = await getClerkToken();
+          if (token) headers.set("Authorization", `Bearer ${token}`);
+        } catch {
+          // Token fetch failed — let the request go without auth
+        }
+      }
+
+      return originalFetch(url, { ...init, headers });
     }
     return originalFetch(input, init);
   }) as typeof fetch;
@@ -44,7 +60,9 @@ createRoot(document.getElementById("root")!).render(
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/dashboard"
     >
-      <App />
+      <ClerkTokenProvider>
+        <App />
+      </ClerkTokenProvider>
     </ClerkProvider>
   ) : (
     <App />

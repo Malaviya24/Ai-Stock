@@ -12,3 +12,16 @@ export const API_BASE = (import.meta.env.VITE_API_URL as string) || "";
 export function apiUrl(path: string): string {
   return `${API_BASE}${path}`;
 }
+
+/**
+ * In split-deployment mode, Clerk's session token must be sent as a Bearer
+ * header on every cross-origin API call (cookies don't travel cross-origin).
+ * This variable holds a getter function that's set by the React tree once
+ * Clerk is initialized (see ClerkTokenProvider in App.tsx). The fetch
+ * interceptor in main.tsx reads it on every request.
+ */
+export let getClerkToken: (() => Promise<string | null>) | null = null;
+
+export function setClerkTokenGetter(fn: () => Promise<string | null>) {
+  getClerkToken = fn;
+}
