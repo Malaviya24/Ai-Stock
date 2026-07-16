@@ -14,8 +14,22 @@ vite.config.ts.*
 .vscode/
 
 # Replit artifacts
-.local/state/
+.local/
 .config/
+.replit
 
 # Runtime state (rewritten on every scan; not source code)
 nifty-dma-state.json
+
+# Build outputs
+dist/
+build/
+client/build/
+
+# Dev/test scripts not needed in production
+check_symbols*.js
+test_*.ts
+test_*.js
+trigger_*.ts
+LTVI_Output.xlsx
+components.json

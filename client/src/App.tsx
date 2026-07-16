@@ -1,4 +1,5 @@
 import { Switch, Route } from "wouter";
+import { lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,30 +10,32 @@ import Landing from "@/pages/landing";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
 import RequireAuth from "@/components/require-auth";
-import Dashboard from "@/pages/dashboard";
-import Scanner from "@/pages/scanner";
-import Portfolio from "@/pages/portfolio";
 
-import StrategyGapUp from "@/pages/strategy-gap-up";
-import StrategyTurtle from "@/pages/strategy-turtle";
-import StrategyMoneyTree from "@/pages/strategy-money-tree";
-import StrategySupu from "@/pages/strategy-supu";
-import StrategyMonthlyCandle from "@/pages/strategy-monthly-candle";
-import StrategyFundamental from "@/pages/strategy-fundamental";
-import StrategyBoh from "@/pages/strategy-boh";
-import StrategyReit from "@/pages/strategy-reit";
-import StrategyNiftyShop from "@/pages/strategy-nifty-shop";
-import StrategyLtvi from "@/pages/strategy-ltvi";
-import StrategyMarking from "@/pages/strategy-marking";
-import StrategyMoneyTreeEtf from "@/pages/strategy-money-tree-etf";
-import StrategyTurtle55 from "@/pages/strategy-turtle-55";
-import StrategyDMA from "@/pages/strategy-dma";
-import StrategyDMACompound from "@/pages/strategy-dma-compound";
-import StrategyCAR from "@/pages/strategy-car";
-import StrategyDMACar from "@/pages/strategy-dma-car";
-import StrategyHoma from "@/pages/strategy-homa";
-import AdvisorPage from "@/pages/advisor";
-import SavedPage from "@/pages/saved";
+// Lazy-load all dashboard/strategy pages so the initial bundle is small (~200KB
+// instead of 1.1MB). Each page loads on demand when the user navigates to it.
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Scanner = lazy(() => import("@/pages/scanner"));
+const Portfolio = lazy(() => import("@/pages/portfolio"));
+const StrategyGapUp = lazy(() => import("@/pages/strategy-gap-up"));
+const StrategyTurtle = lazy(() => import("@/pages/strategy-turtle"));
+const StrategyMoneyTree = lazy(() => import("@/pages/strategy-money-tree"));
+const StrategySupu = lazy(() => import("@/pages/strategy-supu"));
+const StrategyMonthlyCandle = lazy(() => import("@/pages/strategy-monthly-candle"));
+const StrategyFundamental = lazy(() => import("@/pages/strategy-fundamental"));
+const StrategyBoh = lazy(() => import("@/pages/strategy-boh"));
+const StrategyReit = lazy(() => import("@/pages/strategy-reit"));
+const StrategyNiftyShop = lazy(() => import("@/pages/strategy-nifty-shop"));
+const StrategyLtvi = lazy(() => import("@/pages/strategy-ltvi"));
+const StrategyMarking = lazy(() => import("@/pages/strategy-marking"));
+const StrategyMoneyTreeEtf = lazy(() => import("@/pages/strategy-money-tree-etf"));
+const StrategyTurtle55 = lazy(() => import("@/pages/strategy-turtle-55"));
+const StrategyDMA = lazy(() => import("@/pages/strategy-dma"));
+const StrategyDMACompound = lazy(() => import("@/pages/strategy-dma-compound"));
+const StrategyCAR = lazy(() => import("@/pages/strategy-car"));
+const StrategyDMACar = lazy(() => import("@/pages/strategy-dma-car"));
+const StrategyHoma = lazy(() => import("@/pages/strategy-homa"));
+const AdvisorPage = lazy(() => import("@/pages/advisor"));
+const SavedPage = lazy(() => import("@/pages/saved"));
 
 // Wraps a page component with RequireAuth so signed-out users are redirected
 // to /sign-in. Applied to every /dashboard/* route below.
@@ -100,7 +103,9 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <Suspense fallback={null}>
+            <Router />
+          </Suspense>
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
